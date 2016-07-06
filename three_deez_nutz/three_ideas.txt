@@ -1,0 +1,44 @@
+# 3 Ideas for Data Science Capstone
+
+Sebastian Estenssoro
+Galvanize - Data Science Immersive
+Cohort 4 Summer 2016
+
+## Idea 1: 3D Printing - Neural Net
+```
+Crawl websites for .stl files, pictures, and labels. Pull matrix data into
+numpy via stl.Mesh and run through neural net to predict label of 3D printed
+model.
+
+*OR*
+
+Combine with image of design. Give computer image and ask it to draw 3D design?
+
+*OR*
+
+Run neural net backwards to generate 3D design from words?
+
+- Could be overly complex and/or computationally expensive
+- Free designs are usually strange objects. e.g. sculptures/charicatures
+```
+
+## Idea 2: Weld County Landman
+```
+Obtained corporate sponsorship from Denver Oil & Gas company to access Weld
+Count Clerk & Recorder Website (check). Crawl website and download .pdf files of
+Oil & Gas Leases. Pull language from .pdf files and run through NLP to determine
+terms of lease. Supplement with COGCC data to find leases that are expired and
+not produced upon (leases expire based on contract terms if not produced upon).
+Buy leases that are expired and sell back to Oil & Gas companies at premium
+-> profit.
+
+- having difficulty reading some pdfs in. Words are jumbled and/or concatenated
+```
+
+## Idea 3: Colorado Oil & Gas Production
+```
+Crawl COGCC website for production and geospatial data. Find areas that are
+outliers -> exploit -> profit
+
+- kinda boring
+```

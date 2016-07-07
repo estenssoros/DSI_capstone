@@ -1,2 +1,11 @@
-TO DO
-unselect 'Search All Types' button
+# COMPLETED
+
+```
+- unselect 'Search All Types' button
+```
+
+# TO DO
+
+```
+- add try & excepts to soup parsing
+```

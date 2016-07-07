@@ -6,9 +6,14 @@ import os
 import datetime as dt
 import json
 import time
+from pymongo import MongoClient
+import re
 
 
 def get_url(fname):
+    '''
+    Read url form json file
+    '''
     with open(fname) as f:
         for line in f:
             url = json.loads(line)
@@ -16,6 +21,9 @@ def get_url(fname):
 
 
 def start_browser(fname):
+    '''
+    Spin up mechannize browser with starting url from json file
+    '''
     url = get_url(fname)
     br = mechanize.Browser(factory=mechanize.RobustFactory())
 
@@ -43,6 +51,9 @@ def start_browser(fname):
 
 
 def test_html(html):
+    '''
+    Test to see if html returned results
+    '''
     bad_search = 'No results found'
     if bad_search in html:
         return False
@@ -51,19 +62,19 @@ def test_html(html):
 
 
 def search_weld(br, start_date, search_count=1):
-
+    '''
+    Mechanize generator that pulls html from queries from Weld CC website
+    '''
     while True:
-        print '------------------' + str(search_count) + '-----------------------'
+        print '------------------' + str(search_count) + '------------------'
         br.select_form(nr=0)
         end_date = start_date + dt.timedelta(days=1)
-
-        print '    start:', start_date.strftime('%m/%d/%Y')
-        print '    end:  ', end_date.strftime('%m/%d/%Y')
 
         select_items = ['ABSTRACTLSE', 'MEMOLSE', 'OGLSE', 'OGLSEASN']
 
         cntrls = {'RecordingDateIDStart': start_date.strftime('%m/%d/%Y'),
                   'RecordingDateIDEnd': end_date.strftime('%m/%d/%Y'),
+                  'AllDocuments': False,
                   '__search_select': select_items}
 
         for k, v in cntrls.iteritems():
@@ -71,14 +82,72 @@ def search_weld(br, start_date, search_count=1):
         req = br.submit()
         html = req.read()
         if test_html(html):
+            print '    start:', start_date.strftime('%m/%d/%Y')
+            print '    end:  ', end_date.strftime('%m/%d/%Y')
             yield html, start_date, end_date
         br.back()
         start_date = end_date
         search_count += 1
         time.sleep(0.5)
 
+
+def parse_html(html):
+    '''
+    Parse html with BeautifulSoup and return dictionary of dictionary of table results
+    '''
+    soup = BeautifulSoup(html,'html')
+    found_all = True
+    page_banner = soup.find_all('span', attrs={'class': 'pagebanner'})[
+        0].get_text()
+
+    if 'displaying all items' not in page_banner:
+        found_all = False
+
+    pages = ''.join(re.findall(r'[0-9]', page_banner))
+
+    table = soup.find_all('table', attrs={'id': 'searchResultsTable'})[0]
+    rows = table.find_all('tr', {'class': ['even', 'odd']})
+    results = {}
+    for i, row in enumerate(rows):
+        result = {}
+        tds = row.find_all('td')
+        a = tds[0].find_all('a')[0]
+        href = a['href']
+        doc_type = a.get_text()
+        result['href'] = href
+        result['doc_type'] = doc_type
+        result['doc_num'] = ''.join(re.findall(r'[0-9]', href))
+        result['text'] = tds[1].get_text()
+        results[str(i)] = result
+
+    return results, found_all
+
+
+def run(br, start_date):
+    '''
+    Do the damn thing
+    '''
+    client = MongoClient()
+    db = client['landman']
+    coll = db['weld_county']
+
+    search = search_weld(br, start_date)
+
+    for i in range(1):
+        mongo_d = {}
+        html, start_date, end_date = search.next()
+        results, found_all = parse_html(html)
+        # mongo_d['html'] = html
+        mongo_d['start_date'] = str(start_date.date())
+        mongo_d['end_date'] = str(end_date.date())
+        mongo_d['results'] = results
+        mongo_d['found_all'] = found_all
+        try:
+            coll.insert_one(mongo_d)
+        except Exception as e:
+            print e
+
 if __name__ == '__main__':
     br = start_browser('url.json')
     start_date = dt.datetime(2006, 1, 1)
-    search = search_weld(br, start_date)
-    html, start_date, end_date = search.next()
+    run(br, start_date)

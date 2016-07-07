@@ -97,13 +97,15 @@ def parse_html(html):
     Parse html with BeautifulSoup and return dictionary of dictionary of table results
     TO DO:
     - add try and excepts to all ".find_all"
+    - test to see if span class='pagelinks' exists
+        - loop through all pages
     '''
     soup = BeautifulSoup(html, 'html.parser')
     found_all = True
     page_banner = soup.find_all('span', attrs={'class': 'pagebanner'})[
         0].get_text()
 
-    if 'displaying all items' not in page_banner:
+    if '[First/Prev]' in page_banner:
         found_all = False
 
     pages = ''.join(re.findall(r'[0-9]', page_banner))
@@ -131,10 +133,11 @@ def get_dates(coll):
     return max(dates)
 
 
-def run(br, coll, start_date=dt.datetime(2006, 1, 1)):
+def run_scraper(br, coll, start_date=dt.datetime(2006, 1, 1)):
     '''
     TO DO:
     - add multiprocessing and threading
+    - make doc_num into mongo _id
     '''
     try:
         start_date = get_dates(coll)
@@ -143,7 +146,7 @@ def run(br, coll, start_date=dt.datetime(2006, 1, 1)):
 
     search = search_weld(br, start_date)
 
-    for i in range(4):
+    for i in range(30):
         mongo_d = {}
         html, start_date, end_date = search.next()
         results, found_all = parse_html(html)
@@ -152,6 +155,9 @@ def run(br, coll, start_date=dt.datetime(2006, 1, 1)):
         mongo_d['end_date'] = str(end_date.date())
         mongo_d['results'] = results
         mongo_d['found_all'] = found_all
+        print '    -> {0} result(s) found'.format(len(results))
+        if found_all==False:
+            print 'WARNING: Missing Entries From Query'
 
         try:
             coll.insert_one(mongo_d)
@@ -163,4 +169,4 @@ if __name__ == '__main__':
     db = client['landman']
     coll = db['weld_county']
     br = start_browser('url.json')
-    run(br, coll)
+    run_scraper(br, coll)

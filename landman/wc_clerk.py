@@ -99,6 +99,7 @@ def parse_html(html):
     - add try and excepts to all ".find_all"
     - test to see if span class='pagelinks' exists
         - loop through all pages
+        - e.g (3/30/2006 - 3/31/2006)
     '''
     soup = BeautifulSoup(html, 'html.parser')
     found_all = True

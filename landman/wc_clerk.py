@@ -126,40 +126,40 @@ def parse_html(html):
     return results, found_all
 
 
+def get_dates(coll):
+    dates = [parser.parse(row['end_date']) for row in coll.find()]
+    return max(dates)
+
+
 def run(br, coll, start_date=dt.datetime(2006, 1, 1)):
     '''
-    TO DO
-    - add mongo interface to get last scraped dates
+    TO DO:
     - add multiprocessing and threading
     '''
     try:
-        start_date = max(get_dates(coll))
+        start_date = get_dates(coll)
     except Exception as e:
         print e
 
     search = search_weld(br, start_date)
 
-    for i in range(1):
-        mongo_d={}
-        html, start_date, end_date=search.next()
-        results, found_all=parse_html(html)
+    for i in range(4):
+        mongo_d = {}
+        html, start_date, end_date = search.next()
+        results, found_all = parse_html(html)
         # mongo_d['html'] = html
-        mongo_d['start_date']=str(start_date.date())
-        mongo_d['end_date']=str(end_date.date())
-        mongo_d['results']=results
-        mongo_d['found_all']=found_all
+        mongo_d['start_date'] = str(start_date.date())
+        mongo_d['end_date'] = str(end_date.date())
+        mongo_d['results'] = results
+        mongo_d['found_all'] = found_all
 
         try:
             coll.insert_one(mongo_d)
         except Exception as e:
             print e
 
-
-def get_dates(coll):
-    dates=[parser.parse(row['end_date']) for row in coll.find()]
-    return dates
 if __name__ == '__main__':
-    client=MongoClient()
+    client = MongoClient()
     db = client['landman']
     coll = db['weld_county']
     br = start_browser('url.json')

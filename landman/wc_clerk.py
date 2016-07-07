@@ -1,13 +1,14 @@
 import mechanize
 import cookielib
 from bs4 import BeautifulSoup
-import pandas as pd
 import os
 import datetime as dt
 import json
 import time
 from pymongo import MongoClient
 import re
+import threading
+from dateutil import parser
 
 
 def get_url(fname):
@@ -94,8 +95,10 @@ def search_weld(br, start_date, search_count=1):
 def parse_html(html):
     '''
     Parse html with BeautifulSoup and return dictionary of dictionary of table results
+    TO DO:
+    - add try and excepts to all ".find_all"
     '''
-    soup = BeautifulSoup(html,'html')
+    soup = BeautifulSoup(html, 'html.parser')
     found_all = True
     page_banner = soup.find_all('span', attrs={'class': 'pagebanner'})[
         0].get_text()
@@ -123,31 +126,41 @@ def parse_html(html):
     return results, found_all
 
 
-def run(br, start_date):
+def run(br, coll, start_date=dt.datetime(2006, 1, 1)):
     '''
-    Do the damn thing
+    TO DO
+    - add mongo interface to get last scraped dates
+    - add multiprocessing and threading
     '''
-    client = MongoClient()
-    db = client['landman']
-    coll = db['weld_county']
+    try:
+        start_date = max(get_dates(coll))
+    except Exception as e:
+        print e
 
     search = search_weld(br, start_date)
 
     for i in range(1):
-        mongo_d = {}
-        html, start_date, end_date = search.next()
-        results, found_all = parse_html(html)
+        mongo_d={}
+        html, start_date, end_date=search.next()
+        results, found_all=parse_html(html)
         # mongo_d['html'] = html
-        mongo_d['start_date'] = str(start_date.date())
-        mongo_d['end_date'] = str(end_date.date())
-        mongo_d['results'] = results
-        mongo_d['found_all'] = found_all
+        mongo_d['start_date']=str(start_date.date())
+        mongo_d['end_date']=str(end_date.date())
+        mongo_d['results']=results
+        mongo_d['found_all']=found_all
+
         try:
             coll.insert_one(mongo_d)
         except Exception as e:
             print e
 
+
+def get_dates(coll):
+    dates=[parser.parse(row['end_date']) for row in coll.find()]
+    return dates
 if __name__ == '__main__':
+    client=MongoClient()
+    db = client['landman']
+    coll = db['weld_county']
     br = start_browser('url.json')
-    start_date = dt.datetime(2006, 1, 1)
-    run(br, start_date)
+    run(br, coll)

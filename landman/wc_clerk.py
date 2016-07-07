@@ -85,14 +85,14 @@ def search_weld(br, start_date, search_count=1):
         if test_html(html):
             print '    start:', start_date.strftime('%m/%d/%Y')
             print '    end:  ', end_date.strftime('%m/%d/%Y')
-            yield html, start_date, end_date
+            yield html, start_date, end_date, br
         br.back()
         start_date = end_date
         search_count += 1
         time.sleep(0.5)
 
 
-def parse_html(html):
+def parse_html(soup):
     '''
     Parse html with BeautifulSoup and return dictionary of dictionary of table results
     TO DO:
@@ -100,15 +100,11 @@ def parse_html(html):
     - test to see if span class='pagelinks' exists
         - loop through all pages
         - e.g (3/30/2006 - 3/31/2006)
+        - use recursion?
     '''
-    soup = BeautifulSoup(html, 'html.parser')
-    found_all = True
+
     page_banner = soup.find_all('span', attrs={'class': 'pagebanner'})[
         0].get_text()
-
-    if '[First/Prev]' in page_banner:
-        found_all = False
-
     pages = ''.join(re.findall(r'[0-9]', page_banner))
 
     table = soup.find_all('table', attrs={'id': 'searchResultsTable'})[0]
@@ -126,19 +122,28 @@ def parse_html(html):
         result['text'] = tds[1].get_text()
         results[str(i)] = result
 
-    return results, found_all
+    return results
 
 
 def get_dates(coll):
+    '''
+    Get latest date from mongodb
+    '''
     dates = [parser.parse(row['end_date']) for row in coll.find()]
     return max(dates)
+def rec_br(br, k=101):
+    for link in br.links():
+        if link.text=='Next':
+            break
 
+    br.follow_link(link)
+    # br.response().read()
 
-def run_scraper(br, coll, start_date=dt.datetime(2006, 1, 1)):
+def run_scraper(br, coll, start_date=dt.datetime(2006, 3, 30)):
     '''
     TO DO:
-    - add multiprocessing and threading
-    - make doc_num into mongo _id
+    - add multiprocessing and threading?
+    - make doc_num into mongo _id?
     '''
     try:
         start_date = get_dates(coll)
@@ -147,27 +152,36 @@ def run_scraper(br, coll, start_date=dt.datetime(2006, 1, 1)):
 
     search = search_weld(br, start_date)
 
-    for i in range(30):
+    for i in range(1):
+
+        html, start_date, end_date, br = search.next()
+
+        soup = BeautifulSoup(html, 'html.parser')
+
+        page_links = soup.find_all('span', attrs={'class': 'page_links'})
+        if len(page_links) == 0:
+            results = parse_html(soup)
+        else:
+            results = parse_html(soup)
+            # results.update(rec_br(br))
+
+
+        # populatie mongo dictionary
         mongo_d = {}
-        html, start_date, end_date = search.next()
-        results, found_all = parse_html(html)
-        # mongo_d['html'] = html
         mongo_d['start_date'] = str(start_date.date())
         mongo_d['end_date'] = str(end_date.date())
         mongo_d['results'] = results
-        mongo_d['found_all'] = found_all
         print '    -> {0} result(s) found'.format(len(results))
-        if found_all==False:
-            print 'WARNING: Missing Entries From Query'
 
         try:
             coll.insert_one(mongo_d)
         except Exception as e:
             print e
+        return br
 
 if __name__ == '__main__':
     client = MongoClient()
     db = client['landman']
     coll = db['weld_county']
     br = start_browser('url.json')
-    run_scraper(br, coll)
+    br = run_scraper(br, coll)

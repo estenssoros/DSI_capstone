@@ -7,7 +7,6 @@ import json
 import time
 from pymongo import MongoClient
 import re
-import threading
 from dateutil import parser
 
 
@@ -21,7 +20,7 @@ def get_url(fname):
     return url['url']
 
 
-def start_browser(fname):
+def start_browser(fname='url.json'):
     '''
     Spin up mechannize browser with starting url from json file
     '''
@@ -67,7 +66,7 @@ def search_weld(br, start_date, search_count=1):
     Mechanize generator that pulls html from queries from Weld CC website
     '''
     while True:
-        print '------------------' + str(search_count) + '------------------'
+        print '------------------' + '------------------'
         br.select_form(nr=0)
         end_date = start_date + dt.timedelta(days=1)
 
@@ -86,23 +85,19 @@ def search_weld(br, start_date, search_count=1):
             print '    start:', start_date.strftime('%m/%d/%Y')
             print '    end:  ', end_date.strftime('%m/%d/%Y')
             yield html, start_date, end_date, br
+        else:
+            print '    No records found'
         br.back()
         start_date = end_date
         search_count += 1
-        time.sleep(0.5)
+        # time.sleep(0.5)
 
 
-def parse_html(soup):
+def parse_html(html, i):
     '''
     Parse html with BeautifulSoup and return dictionary of dictionary of table results
-    TO DO:
-    - add try and excepts to all ".find_all"
-    - test to see if span class='pagelinks' exists
-        - loop through all pages
-        - e.g (3/30/2006 - 3/31/2006)
-        - use recursion?
     '''
-
+    soup = BeautifulSoup(html, 'html.parser')
     page_banner = soup.find_all('span', attrs={'class': 'pagebanner'})[
         0].get_text()
     pages = ''.join(re.findall(r'[0-9]', page_banner))
@@ -110,7 +105,7 @@ def parse_html(soup):
     table = soup.find_all('table', attrs={'id': 'searchResultsTable'})[0]
     rows = table.find_all('tr', {'class': ['even', 'odd']})
     results = {}
-    for i, row in enumerate(rows):
+    for row in rows:
         result = {}
         tds = row.find_all('td')
         a = tds[0].find_all('a')[0]
@@ -121,6 +116,7 @@ def parse_html(soup):
         result['doc_num'] = ''.join(re.findall(r'[0-9]', href))
         result['text'] = tds[1].get_text()
         results[str(i)] = result
+        i += 1
 
     return results
 
@@ -131,15 +127,37 @@ def get_dates(coll):
     '''
     dates = [parser.parse(row['end_date']) for row in coll.find()]
     return max(dates)
-def rec_br(br, k=101):
+
+
+def recursive_br(br, k=0):
+    '''
+    Recursive function to find all pages associate with a websearch
+    RETURNS:
+    - a dictionary of web results
+    '''
+    # read html and get results
+    html = br.response().read()
+    results = parse_html(html, k)
+    k += len(results)
+
+    # find next link if exists
+    found_next = False
     for link in br.links():
-        if link.text=='Next':
+        if link.text == 'Next':
+            found_next = True
             break
+    # follow next link if exists
+    if found_next == True:
+        print 'switching to:', link.url
+        # time.sleep(0.5)
+        br.follow_link(link)
+        # recursion
+        results.update(recursive_br(br, k))
+        br.back()
+    return results
 
-    br.follow_link(link)
-    # br.response().read()
 
-def run_scraper(br, coll, start_date=dt.datetime(2006, 3, 30)):
+def run_scraper(br, coll, start_date=dt.datetime(2006, 1, 1)):
     '''
     TO DO:
     - add multiprocessing and threading?
@@ -148,23 +166,26 @@ def run_scraper(br, coll, start_date=dt.datetime(2006, 3, 30)):
     try:
         start_date = get_dates(coll)
     except Exception as e:
-        print e
+        print 'No mongo data, starting from {0}'.format(start_date)
 
+    # create serach generator
     search = search_weld(br, start_date)
 
-    for i in range(1):
+    for i in range(300):
+        print 'xxxxxxxxxxxxxxxxxxxxx' + ' ' + 'xxxxxxxxxxxxxxxxxxxxx'
+        print '                     ' + str(i) + '                     '
+        print 'xxxxxxxxxxxxxxxxxxxxx' + 'xxxxxxxxxxxxxxxxxxxxx'
 
-        html, start_date, end_date, br = search.next()
-
-        soup = BeautifulSoup(html, 'html.parser')
-
-        page_links = soup.find_all('span', attrs={'class': 'page_links'})
-        if len(page_links) == 0:
-            results = parse_html(soup)
-        else:
-            results = parse_html(soup)
-            # results.update(rec_br(br))
-
+        # next generator
+        try:
+            html, start_date, end_date, br = search.next()
+        except:
+            br = start_browser()
+            start_date = get_dates(coll)
+            search = search_weld(br, start_date)
+            html, start_date, end_date, br = search.next()
+        # call recursive browser
+        results = recursive_br(br)
 
         # populatie mongo dictionary
         mongo_d = {}
@@ -172,16 +193,18 @@ def run_scraper(br, coll, start_date=dt.datetime(2006, 3, 30)):
         mongo_d['end_date'] = str(end_date.date())
         mongo_d['results'] = results
         print '    -> {0} result(s) found'.format(len(results))
+        print ''
 
-        try:
-            coll.insert_one(mongo_d)
-        except Exception as e:
-            print e
-        return br
+        coll.insert_one(mongo_d)
+        if len(results) > 100:
+            for link in br.links():
+                if link.text == 'Modify Search':
+                    br.follow_link(link)
+                    break
 
 if __name__ == '__main__':
     client = MongoClient()
     db = client['landman']
     coll = db['weld_county']
-    br = start_browser('url.json')
+    br = start_browser()
     br = run_scraper(br, coll)

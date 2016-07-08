@@ -66,7 +66,6 @@ def search_weld(br, start_date, search_count=1):
     Mechanize generator that pulls html from queries from Weld CC website
     '''
     while True:
-        print '------------------' + '------------------'
         br.select_form(nr=0)
         end_date = start_date + dt.timedelta(days=1)
 
@@ -87,6 +86,7 @@ def search_weld(br, start_date, search_count=1):
             yield html, start_date, end_date, br
         else:
             print '      - No records found'
+            print '     ----------------------'
         br.back()
         start_date = end_date
         search_count += 1
@@ -171,10 +171,9 @@ def run_scraper(br, coll, start_date=dt.datetime(2006, 1, 1)):
     # create serach generator
     search = search_weld(br, start_date)
 
-    for i in range(100):
-        print '_____________________' + ' ' + '_____________________'
-        print '|                  |' + str(i) + '|                   |'
-        print '_____________________' + ' ' + '_____________________'
+    for i in range(30):
+
+        print '_____________________|' + str(i) + '|_____________________'
 
         # next generator
         try:
@@ -192,7 +191,7 @@ def run_scraper(br, coll, start_date=dt.datetime(2006, 1, 1)):
         mongo_d['start_date'] = str(start_date.date())
         mongo_d['end_date'] = str(end_date.date())
         mongo_d['results'] = results
-        print '      - {0} result(s) found'.format(len(results))
+        print '      - {0} records(s) found'.format(len(results))
         print ''
 
         coll.insert_one(mongo_d)

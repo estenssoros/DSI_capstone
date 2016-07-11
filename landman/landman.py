@@ -1,7 +1,7 @@
 import pandas as pd
 import re
 import os
-
+import boto
 
 def get_data():
     return pd.read_pickle('weld_docs.pickle')

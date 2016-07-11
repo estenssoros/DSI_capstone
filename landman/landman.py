@@ -66,5 +66,5 @@ if __name__ == '__main__':
     df = clean_df(df)
     f_name = 'clean_weld_docs.csv'
     df.to_csv(f_name, ignore_index=True)
-    write_to_s3(fname)
+    write_to_s3(f_name)
     # write_to_s3('weld_docs.pickle')

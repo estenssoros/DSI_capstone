@@ -28,10 +28,10 @@ def write_to_s3(fname):
 
     file_object = b.new_key(fname)
     file_object.set_contents_from_filename(fname, policy='public-read')
+    print '{} written to {}!'.format(fname, bucket_name)
 
 
 def reg_text(s, exp):
-    s = s.replace(u'\xa0', u' ')
     match = re.findall(exp, s)
     if len(match) == 1:
         return str(match[0])
@@ -41,19 +41,30 @@ def reg_text(s, exp):
         return ''
 
 
-def extract_text(df):
+def clean_df(df):
+    df['text'] = df['text'].str.replace(u'\xa0', u' ').str.replace(',', '')
+
     items = {'rec_date': r'Rec. Date: (\d\d/\d\d/\d+ \d\d:\d\d:\d\d \w\w)',
              'page_num': r'Num Pages: (\d+)',
-             'section': r'Section: (\d+) ',
-             'township': r'Township: (\d+) ',
-             'range': r'Range: (\d+) ',
-             'grantor': r'Grantor: (\D+) Section',
-             'grantee': r'Grantee: (\D+) \n'}
+             'section': r'Section: ([0-9 A-Z]+) [A-Z][a-z]',
+             'township': r'Township: ([0-9 A-Z]+) [A-Z][a-z]',
+             'range': r'Range: ([0-9 A-Z]+) [A-Z][a-z]',
+             'grantor': r'Grantor: ([A-Z]+) [A-Z][a-z]',
+             'grantee': r'Grantee: ([A-Z]+) \n'}
 
     for k, v in items.iteritems():
         df[k] = df.apply(lambda x: reg_text(x['text'], v), axis=1)
+
+    df['range'] = df['range'].str.replace('SEE RECORD', '')
+
+    cols = ['section', 'township', 'range', 'grantor', 'grantee']
+    for col in cols:
+        df[col] = df.apply(lambda x: ' '.join(x[col].split()), axis=1)
     return df
 if __name__ == '__main__':
     df = get_data()
-    df = extract_text(df)
+    df = clean_df(df)
+    f_name = 'clean_weld_docs.csv'
+    df.to_csv(f_name, ignore_index=True)
+    write_to_s3(fname)
     # write_to_s3('weld_docs.pickle')

@@ -4,10 +4,14 @@ import os
 import boto
 
 def get_data():
+    '''
+    '''
     return pd.read_pickle('weld_docs.pickle')
 
 
 def get_aws_keys():
+    '''
+    '''
     env = os.environ
     access_key = env['AWS_ACCESS_KEY_ID']
     access_secret_key = env['AWS_SECRET_ACCESS_KEY']
@@ -15,7 +19,8 @@ def get_aws_keys():
 
 
 def write_to_s3(fname):
-
+    '''
+    '''
     access_key, access_secret_key = get_aws_keys()
 
     conn = boto.connect_s3(access_key, access_secret_key)
@@ -32,6 +37,8 @@ def write_to_s3(fname):
 
 
 def reg_text(s, exp):
+    '''
+    '''
     match = re.findall(exp, s)
     if len(match) == 1:
         return str(match[0])
@@ -42,6 +49,8 @@ def reg_text(s, exp):
 
 
 def clean_df(df):
+    '''
+    '''
     df['text'] = df['text'].str.replace(u'\xa0', u' ').str.replace(',', '')
 
     items = {'rec_date': r'Rec. Date: (\d\d/\d\d/\d+ \d\d:\d\d:\d\d \w\w)',
@@ -61,10 +70,11 @@ def clean_df(df):
     for col in cols:
         df[col] = df.apply(lambda x: ' '.join(x[col].split()), axis=1)
     return df
+
 if __name__ == '__main__':
     df = get_data()
     df = clean_df(df)
     f_name = 'clean_weld_docs.csv'
     df.to_csv(f_name, ignore_index=True)
     write_to_s3(f_name)
-    # write_to_s3('weld_docs.pickle')
+    

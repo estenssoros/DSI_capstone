@@ -8,6 +8,7 @@ import time
 from pymongo import MongoClient
 import re
 from dateutil import parser
+import pandas as pd
 
 
 def get_url(fname):
@@ -201,9 +202,35 @@ def run_scraper(br, coll, start_date=dt.datetime(2006, 1, 1)):
                     br.follow_link(link)
                     break
 
-if __name__ == '__main__':
+
+def get_doc_numbers():
     client = MongoClient()
     db = client['landman']
     coll = db['weld_county']
     br = start_browser()
     br = run_scraper(br, coll)
+
+
+def read_from_s3(fname):
+    df = pd.read_csv(fname)
+    return df
+if __name__ == '__main__':
+    df = pd.read_csv('data/clean_weld_docs.csv',dtype=object)
+    read = pd.read_csv('data/read_docs.csv', dtype=object)
+    doc_nums = [d for d in df['doc_num'] if d not in read['doc_num']]
+
+    br = start_browser()
+
+    for i, doc in enumerate(doc_nums):
+        print doc
+        url = 'https://searchicris.co.weld.co.us/recorder/eagleweb/viewDoc.jsp?node=DOCC' + str(doc)
+
+        br.open(url)
+
+        for link in br.links():
+            if 'view attachment' in link.text.lower():
+                br.retrieve(link.absolute_url, 'docs/' + str(doc) + '.pdf')
+                read = read.append({'doc_num':str(doc)},ignore_index=True)
+                read.to_csv('data/read_docs.csv',index=False)
+        if i >5:
+            break

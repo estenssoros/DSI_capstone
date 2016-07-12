@@ -35,6 +35,9 @@ def write_to_s3(fname):
     file_object.set_contents_from_filename(fname, policy='public-read')
     print '{} written to {}!'.format(fname, bucket_name)
 
+def read_from_s3(fname):
+    df = pd.read_csv(fname)
+    return df
 
 def reg_text(s, exp):
     '''
@@ -72,9 +75,9 @@ def clean_df(df):
     return df
 
 if __name__ == '__main__':
-    df = get_data()
-    df = clean_df(df)
-    f_name = 'clean_weld_docs.csv'
-    df.to_csv(f_name, ignore_index=True)
-    write_to_s3(f_name)
-    
+    # df = get_data()
+    # df = clean_df(df)
+    # f_name = 'clean_weld_docs.csv'
+    # df.to_csv(f_name, ignore_index=True)
+    # write_to_s3(f_name)
+    df = pd.read_csv('data/clean_weld_docs.csv')

@@ -217,7 +217,9 @@ def read_from_s3(fname):
     return df
 
 
-def get_docs(limit):
+def get_docs(limit, directory):
+    if not directory.endswith('/'):
+        directory += '/'
     df = pd.read_csv('data/clean_weld_docs.csv', dtype=object)
     read = pd.read_csv('data/read_docs.csv', dtype=object)
     doc_nums = df['doc_num'][~df['doc_num'].isin(read['doc_num'].values.tolist())].values.tolist()
@@ -232,13 +234,16 @@ def get_docs(limit):
         doc_id = 0
         print '{}: {}_{}'.format(i, doc, doc_id)
 
-        for link in br.links():
-            if 'view attachment' in link.text.lower():
-                br.retrieve(link.absolute_url, 'docs/' + str(doc) + '_' + str(doc_id) + '.pdf')
-                read = read.append({'doc_num': str(doc),
-                                    'doc_id': doc_id}, ignore_index=True)
-                read.to_csv('data/read_docs.csv', index=False)
-                doc_id += 1
+        try:
+            for link in br.links():
+                if 'view attachment' in link.text.lower():
+                    br.retrieve(link.absolute_url, directory + str(doc) + '_' + str(doc_id) + '.pdf')
+                    read = read.append({'doc_num': str(doc),
+                                        'doc_id': doc_id}, ignore_index=True)
+                    read.to_csv('data/read_docs.csv', index=False)
+                    doc_id += 1
+        except Exception as e:
+            print e
         if i == limit:
             break
 
@@ -262,8 +267,6 @@ def write_to_s3(fname, directory=None):
     else:
         b = conn.get_bucket(bucket_name)
     if directory:
-        if not directory.endswith('/'):
-            directory += '/'
         file_object = b.new_key(directory + fname)
         file_object.set_contents_from_filename(directory + fname, policy='public-read')
     else:
@@ -271,9 +274,23 @@ def write_to_s3(fname, directory=None):
         file_object.set_contents_from_filename(fname, policy='public-read')
     print '{} written to {}!'.format(fname, bucket_name)
 
-if __name__ == '__main__':
-    directory = 'welddocs/'
+
+def upload_docs(directory):
+    if not directory.endswith('/'):
+        directory += '/'
     for f in os.listdir(directory):
         if f.endswith('.pdf'):
             write_to_s3(f, directory)
-            os.remove(directory+f)
+            os.remove(directory + f)
+
+if __name__ == '__main__':
+    df = pd.read_csv('https://s3.amazonaws.com/sebsbucket/data/read_docs.csv')
+    df.to_csv('data/read_docs.csv',index=False)
+    for i in range(5):
+        sleep = 5
+        get_docs(50, 'welddocs/')
+        upload_docs('welddocs/')
+        write_to_s3('data/read_docs.csv')
+# ssh -i .ssh/sebawskey.pem ubuntu@52.90.0.248
+# scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/wc_clerk.py ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/
+# scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/data/read_docs.csv ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/data/read_docs.csv

@@ -290,7 +290,7 @@ if __name__ == '__main__':
     df.to_csv('data/read_docs.csv', index=False)
     print len(df)
     for i in range(5):
-        get_docs(50, 'welddocs/')
+        get_docs(49, 'welddocs/')
         upload_docs('welddocs/')
         write_to_s3('data/read_docs.csv')
 

@@ -215,22 +215,27 @@ def read_from_s3(fname):
     df = pd.read_csv(fname)
     return df
 if __name__ == '__main__':
-    df = pd.read_csv('data/clean_weld_docs.csv',dtype=object)
+    df = pd.read_csv('data/clean_weld_docs.csv', dtype=object)
     read = pd.read_csv('data/read_docs.csv', dtype=object)
-    doc_nums = [d for d in df['doc_num'] if d not in read['doc_num']]
-
+    doc_nums = df['doc_num'][~df['doc_num'].isin(read['doc_num'].values.tolist())].values.tolist()
+    #
     br = start_browser()
 
     for i, doc in enumerate(doc_nums):
-        print doc
+
         url = 'https://searchicris.co.weld.co.us/recorder/eagleweb/viewDoc.jsp?node=DOCC' + str(doc)
 
         br.open(url)
 
+        doc_id = 0
+        print '{}_{}'.format(doc, doc_id)
+
         for link in br.links():
             if 'view attachment' in link.text.lower():
-                br.retrieve(link.absolute_url, 'docs/' + str(doc) + '.pdf')
-                read = read.append({'doc_num':str(doc)},ignore_index=True)
-                read.to_csv('data/read_docs.csv',index=False)
-        if i >5:
+                br.retrieve(link.absolute_url, 'docs/' + str(doc) + '_' + str(doc_id) + '.pdf')
+                read = read.append({'doc_num': str(doc),
+                                    'doc_id': doc_id}, ignore_index=True)
+                read.to_csv('data/read_docs.csv', index=False)
+                doc_id += 1
+        if i > 10:
             break

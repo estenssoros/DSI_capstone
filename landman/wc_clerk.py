@@ -296,6 +296,4 @@ if __name__ == '__main__':
 
 # ssh -i .ssh/sebawskey.pem ubuntu@52.90.0.248
 # scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/wc_clerk.py ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/
-# scp -i .ssh/sebawskey.pem
-# Desktop/DSI_capstone/landman/data/read_docs.csv
-# ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/data/read_docs.csv
+# scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/data/read_docs.csv ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/data/read_docs.csv

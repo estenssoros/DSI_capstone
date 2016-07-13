@@ -242,8 +242,10 @@ def get_docs(limit, directory):
                                         'doc_id': doc_id}, ignore_index=True)
                     read.to_csv('data/read_docs.csv', index=False)
                     doc_id += 1
+
         except Exception as e:
             print e
+
         if i == limit:
             break
 
@@ -285,12 +287,16 @@ def upload_docs(directory):
 
 if __name__ == '__main__':
     df = pd.read_csv('https://s3.amazonaws.com/sebsbucket/data/read_docs.csv')
-    df.to_csv('data/read_docs.csv',index=False)
-    for i in range(5):
-        sleep = 5
-        get_docs(50, 'welddocs/')
-        upload_docs('welddocs/')
-        write_to_s3('data/read_docs.csv')
-# ssh -i .ssh/sebawskey.pem ubuntu@52.90.0.248x
+    df.to_csv('data/read_docs.csv', index=False)
+    print len(df)
+    # for i in range(5):
+    #     sleep = 5
+    #     get_docs(50, 'welddocs/')
+    #     upload_docs('welddocs/')
+    #     write_to_s3('data/read_docs.csv')
+
+# ssh -i .ssh/sebawskey.pem ubuntu@52.90.0.248
 # scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/wc_clerk.py ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/
-# scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/data/read_docs.csv ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/data/read_docs.csv
+# scp -i .ssh/sebawskey.pem
+# Desktop/DSI_capstone/landman/data/read_docs.csv
+# ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/data/read_docs.csv

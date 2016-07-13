@@ -9,6 +9,7 @@ from pymongo import MongoClient
 import re
 from dateutil import parser
 import pandas as pd
+import boto
 
 
 def get_url(fname):
@@ -214,11 +215,12 @@ def get_doc_numbers():
 def read_from_s3(fname):
     df = pd.read_csv(fname)
     return df
-if __name__ == '__main__':
+
+
+def get_docs(limit):
     df = pd.read_csv('data/clean_weld_docs.csv', dtype=object)
     read = pd.read_csv('data/read_docs.csv', dtype=object)
     doc_nums = df['doc_num'][~df['doc_num'].isin(read['doc_num'].values.tolist())].values.tolist()
-    #
     br = start_browser()
 
     for i, doc in enumerate(doc_nums):
@@ -228,7 +230,7 @@ if __name__ == '__main__':
         br.open(url)
 
         doc_id = 0
-        print '{}_{}'.format(doc, doc_id)
+        print '{}: {}_{}'.format(i, doc, doc_id)
 
         for link in br.links():
             if 'view attachment' in link.text.lower():
@@ -237,5 +239,41 @@ if __name__ == '__main__':
                                     'doc_id': doc_id}, ignore_index=True)
                 read.to_csv('data/read_docs.csv', index=False)
                 doc_id += 1
-        if i > 10:
+        if i == limit:
             break
+
+
+def get_aws_keys():
+    env = os.environ
+    access_key = env['AWS_ACCESS_KEY_ID']
+    access_secret_key = env['AWS_SECRET_ACCESS_KEY']
+    return access_key, access_secret_key
+
+
+def write_to_s3(fname, directory=None):
+
+    access_key, access_secret_key = get_aws_keys()
+
+    conn = boto.connect_s3(access_key, access_secret_key)
+    bucket_name = 'sebsbucket'
+
+    if conn.lookup(bucket_name) is None:
+        raise ValueError('Bucket does not exist! WTF!')
+    else:
+        b = conn.get_bucket(bucket_name)
+    if directory:
+        if not directory.endswith('/'):
+            directory += '/'
+        file_object = b.new_key(directory + fname)
+        file_object.set_contents_from_filename(directory + fname, policy='public-read')
+    else:
+        file_object = b.new_key(fname)
+        file_object.set_contents_from_filename(fname, policy='public-read')
+    print '{} written to {}!'.format(fname, bucket_name)
+
+if __name__ == '__main__':
+    directory = 'welddocs/'
+    for f in os.listdir(directory):
+        if f.endswith('.pdf'):
+            write_to_s3(f, directory)
+            os.remove(directory+f)

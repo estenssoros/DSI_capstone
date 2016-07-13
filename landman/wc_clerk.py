@@ -291,6 +291,6 @@ if __name__ == '__main__':
         get_docs(50, 'welddocs/')
         upload_docs('welddocs/')
         write_to_s3('data/read_docs.csv')
-# ssh -i .ssh/sebawskey.pem ubuntu@52.90.0.248
+# ssh -i .ssh/sebawskey.pem ubuntu@52.90.0.248x
 # scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/wc_clerk.py ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/
 # scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/data/read_docs.csv ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/data/read_docs.csv

@@ -228,12 +228,10 @@ def get_docs(limit, directory):
     br = start_browser()
 
     for i, doc in enumerate(doc_nums):
+        doc_id = 0
         print '{}: {}_{}'.format(i, doc, doc_id)
         url = 'https://searchicris.co.weld.co.us/recorder/eagleweb/viewDoc.jsp?node=DOCC' + str(doc)
-
         br.open(url)
-
-        doc_id = 0
 
         try:
             for link in br.links():

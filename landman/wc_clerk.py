@@ -221,6 +221,7 @@ def get_docs(limit, directory):
     if not directory.endswith('/'):
         directory += '/'
     df = pd.read_csv('data/clean_weld_docs.csv', dtype=object)
+    print len(df)
     read = pd.read_csv('data/read_docs.csv', dtype=object)
     doc_nums = df['doc_num'][~df['doc_num'].isin(read['doc_num'].values.tolist())].values.tolist()
     br = start_browser()
@@ -288,12 +289,12 @@ def upload_docs(directory):
 if __name__ == '__main__':
     df = pd.read_csv('https://s3.amazonaws.com/sebsbucket/data/read_docs.csv')
     df.to_csv('data/read_docs.csv', index=False)
-    print len(df)
-    for i in range(5):
-        get_docs(49, 'welddocs/')
-        upload_docs('welddocs/')
-        write_to_s3('data/read_docs.csv')
-
+    for j in range(10):
+        for i in range(5):
+            get_docs(49, 'welddocs/')
+            upload_docs('welddocs/')
+            write_to_s3('data/read_docs.csv')
+        time.sleep(60)
 # ssh -i .ssh/sebawskey.pem ubuntu@52.90.0.248
 # scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/wc_clerk.py ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/
 # scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/data/read_docs.csv ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/data/read_docs.csv

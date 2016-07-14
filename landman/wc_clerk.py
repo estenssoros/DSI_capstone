@@ -231,8 +231,11 @@ def get_docs(limit, directory):
         doc_id = 0
         print '{}: {}_{}'.format(i, doc, doc_id)
         url = 'https://searchicris.co.weld.co.us/recorder/eagleweb/viewDoc.jsp?node=DOCC' + str(doc)
-        br.open(url)
-
+        try:
+            br.open(url)
+        except Exception as e:
+            print '{0} - {1}}'.format(doc,e)
+            continue
         try:
             for link in br.links():
                 if 'view attachment' in link.text.lower():

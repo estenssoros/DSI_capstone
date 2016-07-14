@@ -1,3 +1,4 @@
+from __future__ import division
 import mechanize
 import cookielib
 from bs4 import BeautifulSoup
@@ -295,10 +296,10 @@ if __name__ == '__main__':
         for i in range(5):
             t_2 = time.time()
             get_docs(49, 'welddocs/')
-            print '{0}/{1} - {2}/{3} - sub time: {4} total time{5}'.format(j, 10, i, 5, time.time() - t_2, time.time() - t_1)
+            print '{0}/{1} - {2}/{3} - sub time: {4:.2f} total time: {5:.2f}'.format(j + 1, 10, i + 1, 5, (time.time() - t_2) / 60, (time.time() - t_1) / 60)
             upload_docs('welddocs/')
             write_to_s3('data/read_docs.csv')
-            print '{0}/{1} - {2}/{3} - sub time: {4} total time{5}'.format(j, 10, i, 5, time.time() - t_2, time.time() - t_1)
+            print '{0}/{1} - {2}/{3} - sub time: {4:.2f} total time: {5:.2f}'.format(j + 1, 10, i + 1, 5, (time.time() - t_2) / 60, (time.time() - t_1) / 60)
         time.sleep(60)
 
 # ssh -i .ssh/sebawskey.pem ubuntu@52.90.0.248

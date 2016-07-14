@@ -237,7 +237,7 @@ def get_docs(limit, directory):
         except Exception as e:
             print '{0} - {1}'.format(doc, e)
             exceptions = pd.read_csv('data/exceptions.csv', dtype=object)
-            exceptions = exceptions.append({'exception': doc})
+            exceptions = exceptions.append({'exception': doc}, ignore_index=True)
             exceptions.to_csv('data/exceptions.csv', index=False)
             time.sleep(3)
             continue

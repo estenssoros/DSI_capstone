@@ -2,3 +2,5 @@
 *.csv
 *.pdf
 *.json
+*.ipynb
+*.pyc

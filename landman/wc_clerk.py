@@ -223,6 +223,7 @@ def get_docs(limit, directory):
         directory += '/'
     df = pd.read_csv('data/clean_weld_docs.csv', dtype=object)
     read = pd.read_csv('data/read_docs.csv', dtype=object)
+
     print '-------------------{0}-------------------'.format(len(read))
     doc_nums = df['doc_num'][~df['doc_num'].isin(read['doc_num'].values.tolist())].values.tolist()
     br = start_browser()
@@ -234,7 +235,11 @@ def get_docs(limit, directory):
         try:
             br.open(url)
         except Exception as e:
-            print '{0} - {1}}'.format(doc,e)
+            print '{0} - {1}}'.format(doc, e)
+            exceptions = pd.read_csv('data/exceptions.csv', dtype=object)
+            exceptions = exceptions.append({'exception': doc})
+            exceptions.to_csv('data/exceptions.csv', index=False)
+            time.sleep(3)
             continue
         try:
             for link in br.links():

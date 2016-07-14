@@ -239,6 +239,9 @@ def get_docs(limit, directory):
             exceptions = pd.read_csv('data/exceptions.csv', dtype=object)
             exceptions = exceptions.append({'exception': doc}, ignore_index=True)
             exceptions.to_csv('data/exceptions.csv', index=False)
+            read = read.append({'doc_num': str(doc),
+                                'doc_id': doc_id}, ignore_index=True)
+            read.to_csv('data/read_docs.csv', index=False)
             time.sleep(3)
             continue
         try:

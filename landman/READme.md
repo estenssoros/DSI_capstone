@@ -2,10 +2,11 @@
 
 ```
 - unselect 'Search All Types' button
+- add try & excepts to soup parsing
 ```
 
 # TO DO
 
 ```
-- add try & excepts to soup parsing
+- correct doc numbers with [A-Z]
 ```

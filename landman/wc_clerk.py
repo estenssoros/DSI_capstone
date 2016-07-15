@@ -350,7 +350,9 @@ def twilio_message(message):
     client = TwilioRestClient(account, token)
     message = client.messages.create(to="+13032299207", from_="+17206139570",
                                      body=message)
-
+def sync_read():
+    df = pd.read_csv('https://s3.amazonaws.com/sebsbucket/data/new_read.csv')
+    df.to_csv('data/new_read.csv', index=False)
 
 def get_docs():
     '''
@@ -359,8 +361,7 @@ def get_docs():
     Run loop to scrap weld county website at desired pace. Upload scraped
     documents to S3 bucket and removed from local machine.
     '''
-    df = pd.read_csv('https://s3.amazonaws.com/sebsbucket/data/new_read.csv')
-    df.to_csv('data/new_read.csv', index=False)
+    update_read()
 
     t_1 = time.time()
     for j in range(50):
@@ -369,14 +370,14 @@ def get_docs():
             download_docs(49, 'welddocs/')
             print_status(j, i, t_1, t_2)
 
-            upload_docs('welddocs/')
+            sync_docs('welddocs/')
             write_to_s3('data/new_read.csv')
             print_status(j, i, t_1, t_2)
         time.sleep(60)
     twilio_message('Python script done!')
 
 if __name__ == '__main__':
-    get_docs()
+    pass
 
 # ssh -i .ssh/sebawskey.pem ubuntu@52.90.0.248
 # scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/wc_clerk.py ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/

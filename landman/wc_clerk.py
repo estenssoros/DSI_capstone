@@ -11,6 +11,7 @@ import re
 from dateutil import parser
 import pandas as pd
 import boto
+from twilio.rest import TwilioRestClient
 
 
 def get_url(fname):
@@ -287,6 +288,13 @@ def upload_docs(directory):
             write_to_s3(f, directory)
             os.remove(directory + f)
 
+
+def twilio_message(message):
+    account = os.environ['TWILIO_ACCOUNT']
+    token = os.environ['TWILIO_TOKEN']
+    client = TwilioRestClient(account, token)
+    message = client.messages.create(to="+13032299207", from_="+17206139570",
+                                     body=message)
 if __name__ == '__main__':
     df = pd.read_csv('https://s3.amazonaws.com/sebsbucket/data/new_read.csv')
     df.to_csv('data/new_read.csv', index=False)
@@ -295,12 +303,12 @@ if __name__ == '__main__':
         for i in range(5):
             t_2 = time.time()
             get_docs(49, 'welddocs/')
-            print '{0}/{1} - {2}/{3} - sub time: {4:.2f} total time: {5:.2f}'.format(j + 1, 10, i + 1, 5, (time.time() - t_2) / 60, (time.time() - t_1) / 60)
+            print '{0}/{1} - {2}/{3} - sub time: {4:.2f} - total time: {5:.2f}'.format(j + 1, 10, i + 1, 5, (time.time() - t_2) / 60, (time.time() - t_1) / 60)
             upload_docs('welddocs/')
             write_to_s3('data/new_read.csv')
-            print '{0}/{1} - {2}/{3} - sub time: {4:.2f} total time: {5:.2f}'.format(j + 1, 10, i + 1, 5, (time.time() - t_2) / 60, (time.time() - t_1) / 60)
+            print '{0}/{1} - {2}/{3} - sub time: {4:.2f} - total time: {5:.2f}'.format(j + 1, 10, i + 1, 5, (time.time() - t_2) / 60, (time.time() - t_1) / 60)
         time.sleep(60)
-
+    twilio_message('Python script done! ' + dt.datetime.today().strftime('%r'))
 # ssh -i .ssh/sebawskey.pem ubuntu@52.90.0.248
 # scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/wc_clerk.py ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/
 # scp -i .ssh/sebawskey.pem

@@ -3,6 +3,11 @@ from pymongo import MongoClient
 
 
 def make_df():
+    '''
+    INPUT: None
+    OUTPUT: None
+    Connect to monog database and aggregate results into DataFrame
+    '''
     client = MongoClient()
     db = client['landman']
     coll = db['weld_county']
@@ -12,7 +17,6 @@ def make_df():
                                    'doc_type',
                                    'href',
                                    'text'])
-    # loop mongo
     for dic in coll.find():
         df = pd.DataFrame(columns=['start_date',
                                    'end_date',
@@ -38,7 +42,6 @@ def make_df():
         master = master.append(df, ignore_index=True)
         print len(master), start_date
     master = master[~master['doc_num'].duplicated()]
-    master.to_pickle('weld_docs.pickle')
+    master.to_pickle('data/clean_weld_docs.pickle')
 
 if __name__ == '__main__':
-    df = pd.read_pickle('weld_docs.pickle')

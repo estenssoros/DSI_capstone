@@ -366,7 +366,6 @@ def get_docs():
     documents to S3 bucket and removed from local machine.
     '''
     sync_read()
-
     t_1 = time.time()
     for j in range(50):
         for i in range(5):
@@ -382,9 +381,8 @@ def get_docs():
 
 if __name__ == '__main__':
     pass
-
-# ssh -i .ssh/sebawskey.pem ubuntu@52.90.0.248
-# scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/wc_clerk.py ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/
-# scp -i .ssh/sebawskey.pem
-# Desktop/DSI_capstone/landman/data/read_docs.csv
-# ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/data/read_docs.csv
+'''
+ssh -i ~/.ssh/sebawskey.pem ubuntu@52.90.0.248
+scp -i ~/.ssh/sebawskey.pem <file> ubuntu@52.90.0.248:<path>
+scp -i ~/.ssh/sebawskey.pem -r <direcotry> ubuntu@52.90.0.248:<path>
+'''

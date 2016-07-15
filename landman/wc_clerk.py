@@ -255,14 +255,16 @@ def download_docs(limit, directory):
         doc_id = 0
         print '{}: {}_{}'.format(i, doc, doc_id)
         url = base_url + doc
-
-        br.open(url)
-
+        try:
+            br.open(url)
+        except Exception as e:
+            message = 'Script encountered error with browser object: {} '.format(e)
+            message += '{0} total files in new_read.csv'.fromat(len(read))
         try:
             for link in br.links():
                 if 'view attachment' in link.text.lower():
                     br.retrieve(link.absolute_url, directory + str(doc) + '_' + str(doc_id) + '.pdf')
-                    read = read.append({'doc_num': str(doc),
+                    read = read.append({'new_doc_num': str(doc),
                                         'doc_id': doc_id}, ignore_index=True)
                     read.to_csv('data/new_read.csv', index=False)
                     doc_id += 1
@@ -344,15 +346,17 @@ def twilio_message(message):
     OUTPUT: None
     Sends SMS via twilio client
     '''
-    message += ' ' + dt.datetime.today().strftime('%r')
     account = os.environ['TWILIO_ACCOUNT']
     token = os.environ['TWILIO_TOKEN']
     client = TwilioRestClient(account, token)
     message = client.messages.create(to="+13032299207", from_="+17206139570",
                                      body=message)
+
+
 def sync_read():
     df = pd.read_csv('https://s3.amazonaws.com/sebsbucket/data/new_read.csv')
     df.to_csv('data/new_read.csv', index=False)
+
 
 def get_docs():
     '''
@@ -361,7 +365,7 @@ def get_docs():
     Run loop to scrap weld county website at desired pace. Upload scraped
     documents to S3 bucket and removed from local machine.
     '''
-    update_read()
+    sync_read()
 
     t_1 = time.time()
     for j in range(50):

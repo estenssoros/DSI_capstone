@@ -374,7 +374,7 @@ def get_docs():
             download_docs(49, 'welddocs/')
             print_status(j, i, t_1, t_2)
 
-            sync_docs('welddocs/')
+            upload_docs('welddocs/')
             write_to_s3('data/new_read.csv')
             print_status(j, i, t_1, t_2)
         time.sleep(60)

@@ -299,7 +299,7 @@ if __name__ == '__main__':
     df = pd.read_csv('https://s3.amazonaws.com/sebsbucket/data/new_read.csv')
     df.to_csv('data/new_read.csv', index=False)
     t_1 = time.time()
-    for j in range(10):
+    for j in range(50):
         for i in range(5):
             t_2 = time.time()
             get_docs(49, 'welddocs/')

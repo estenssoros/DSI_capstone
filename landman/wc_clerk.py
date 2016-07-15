@@ -1,34 +1,38 @@
 from __future__ import division
+from twilio.rest import TwilioRestClient
+from pymongo import MongoClient
+from bs4 import BeautifulSoup
+from dateutil import parser
+import datetime as dt
+import pandas as pd
 import mechanize
 import cookielib
-from bs4 import BeautifulSoup
-import os
-import datetime as dt
 import json
 import time
-from pymongo import MongoClient
-import re
-from dateutil import parser
-import pandas as pd
 import boto
-from twilio.rest import TwilioRestClient
+import os
+import re
 
 
-def get_url(fname):
+def get_url(fname, url_name):
     '''
+    INPUT: file name, dictionary key
+    OUTPUT: url form dictionary
     Read url form json file
     '''
     with open(fname) as f:
         for line in f:
-            url = json.loads(line)
-    return url['url']
+            urls = json.loads(line)
+    return urls[url_name]
 
 
 def start_browser(fname='url.json'):
     '''
-    Spin up mechannize browser with starting url from json file
+    INPUT: url.json filename
+    OUTPUT: mechanize browser
+    Initialized mechanize browser with starting url from json file
     '''
-    url = get_url(fname)
+
     br = mechanize.Browser(factory=mechanize.RobustFactory())
 
     cj = cookielib.LWPCookieJar()
@@ -44,18 +48,23 @@ def start_browser(fname='url.json'):
     br.addheaders = [
         ('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
 
+    url = get_url(fname, 'search_url')
     br.open(url)
     br.select_form(nr=1)
 
     br.form['userId'] = os.environ['WELD_COUNTY_USER_NAME']
     br.form['password'] = os.environ['WELD_COUNTY_PASSWORD']
     br.submit()
+
     print 'Form submitted! Arrived at {}'.format(br.title())
     return br
 
 
 def test_html(html):
     '''
+    INPUT: html
+    OUTPUT: boolean
+
     Test to see if html returned results
     '''
     bad_search = 'No results found'
@@ -67,7 +76,9 @@ def test_html(html):
 
 def search_weld(br, start_date, search_count=1):
     '''
-    Mechanize generator that pulls html from queries from Weld CC website
+    INPUT: mehcnize browser, start_date, search_count
+    OUTPUT: yields html, start_date, end_date, and mechanize browser
+    Generator that queries and pulls html from Weld CC website
     '''
     while True:
         br.select_form(nr=0)
@@ -94,11 +105,13 @@ def search_weld(br, start_date, search_count=1):
         br.back()
         start_date = end_date
         search_count += 1
-        # time.sleep(0.5)
 
 
 def parse_html(html, i):
     '''
+    INPUT: html, dictionary key
+    OUTPUT: documents metadata from html
+
     Parse html with BeautifulSoup and return dictionary of dictionary of table results
     '''
     soup = BeautifulSoup(html, 'html.parser')
@@ -108,6 +121,7 @@ def parse_html(html, i):
 
     table = soup.find_all('table', attrs={'id': 'searchResultsTable'})[0]
     rows = table.find_all('tr', {'class': ['even', 'odd']})
+
     results = {}
     for row in rows:
         result = {}
@@ -117,7 +131,7 @@ def parse_html(html, i):
         doc_type = a.get_text()
         result['href'] = href
         result['doc_type'] = doc_type
-        result['doc_num'] = ''.join(re.findall(r'[0-9]', href))
+        result['doc_num'] = href[href.find('DOC'):]
         result['text'] = tds[1].get_text()
         results[str(i)] = result
         i += 1
@@ -127,6 +141,9 @@ def parse_html(html, i):
 
 def get_dates(coll):
     '''
+    INPUT: mongo collection object
+    OUTPUT: highest date in mongo colection
+
     Get latest date from mongodb
     '''
     dates = [parser.parse(row['end_date']) for row in coll.find()]
@@ -135,9 +152,10 @@ def get_dates(coll):
 
 def recursive_br(br, k=0):
     '''
+    INPUT: mechanize browser, results dictionary key
+    OUTPUT: dictionary of web results
+
     Recursive function to find all pages associate with a websearch
-    RETURNS:
-    - a dictionary of web results
     '''
     # read html and get results
     html = br.response().read()
@@ -161,18 +179,26 @@ def recursive_br(br, k=0):
     return results
 
 
-def run_scraper(br, coll, start_date=dt.datetime(2006, 1, 1)):
+def doc_num_scraper(start_date=dt.datetime(2006, 1, 1)):
     '''
-    TO DO:
-    - add multiprocessing and threading?
-    - make doc_num into mongo _id?
+    INPUT: None
+    OUTPUT: None
+
+    Searches weld county website for document numbers populates into mongo database
     '''
+
+    client = MongoClient()
+    db = client['landman']
+    coll = db['weld_county']
+
+    br = start_browser()
+
     try:
         start_date = get_dates(coll)
     except Exception as e:
         print 'No mongo data, starting from {0}'.format(start_date)
 
-    # create serach generator
+    # create search generator
     search = search_weld(br, start_date)
 
     for i in range(30):
@@ -206,33 +232,29 @@ def run_scraper(br, coll, start_date=dt.datetime(2006, 1, 1)):
                     break
 
 
-def get_doc_numbers():
-    client = MongoClient()
-    db = client['landman']
-    coll = db['weld_county']
-    br = start_browser()
-    br = run_scraper(br, coll)
+def download_docs(limit, directory):
+    '''
+    INPUT: scraping limit, save directory
+    OUTPUT: None
 
-
-def read_from_s3(fname):
-    df = pd.read_csv(fname)
-    return df
-
-
-def get_docs(limit, directory):
+    '''
+    base_url = get_url('url.json', 'doc_url')
     if not directory.endswith('/'):
         directory += '/'
+
     df = pd.read_csv('data/clean_weld_docs.csv', dtype=object)
     read = pd.read_csv('data/new_read.csv', dtype=object)
 
     print '-------------------{0}-------------------'.format(len(read))
+
     doc_nums = df['new_doc_num'][~df['new_doc_num'].isin(read['new_doc_num'].values.tolist())].values.tolist()
+
     br = start_browser()
 
     for i, doc in enumerate(doc_nums):
         doc_id = 0
         print '{}: {}_{}'.format(i, doc, doc_id)
-        url = 'https://searchicris.co.weld.co.us/recorder/eagleweb/viewDoc.jsp?node=' + doc
+        url = base_url + doc
 
         br.open(url)
 
@@ -254,6 +276,10 @@ def get_docs(limit, directory):
 
 
 def get_aws_keys():
+    '''
+    INPUT: None
+    OUTPUT: aws access_key and secret_access_key
+    '''
     env = os.environ
     access_key = env['AWS_ACCESS_KEY_ID']
     access_secret_key = env['AWS_SECRET_ACCESS_KEY']
@@ -261,7 +287,11 @@ def get_aws_keys():
 
 
 def write_to_s3(fname, directory=None):
-
+    '''
+    INPUT: File name, Directory
+    OUTPUT: None
+    write file at given directory to S3 bucket
+    '''
     access_key, access_secret_key = get_aws_keys()
 
     conn = boto.connect_s3(access_key, access_secret_key)
@@ -271,16 +301,22 @@ def write_to_s3(fname, directory=None):
         raise ValueError('Bucket does not exist! WTF!')
     else:
         b = conn.get_bucket(bucket_name)
+
     if directory:
-        file_object = b.new_key(directory + fname)
-        file_object.set_contents_from_filename(directory + fname, policy='public-read')
-    else:
-        file_object = b.new_key(fname)
-        file_object.set_contents_from_filename(fname, policy='public-read')
+        fname = directory + fname
+
+    file_object = b.new_key(fname)
+    file_object.set_contents_from_filename(fname, policy='public-read')
+
     print '{} written to {}!'.format(fname, bucket_name)
 
 
 def upload_docs(directory):
+    '''
+    INPUT: directory
+    OUTPUT: None
+    Passes documents to write_to_s3 and removes from local machine
+    '''
     if not directory.endswith('/'):
         directory += '/'
     for f in os.listdir(directory):
@@ -289,26 +325,59 @@ def upload_docs(directory):
             os.remove(directory + f)
 
 
+def print_status(j, i, t_1, t_2):
+    '''
+    INPUT: main loop index, sub loop index, main time, sub time
+    OUTPUT: None
+    Print current status and time of scraping loop
+    '''
+    j += 1
+    i += 1
+    t_1 = (time.time() - t_1) / 60
+    t_2 = (time.time() - t_2) / 60
+    print '{0}/5 - {1}/10 - sub time: {2:.2f} - total time: {3:.2f}'.format(j, i, t_2, t_1)
+
+
 def twilio_message(message):
+    '''
+    INPUT: message
+    OUTPUT: None
+    Sends SMS via twilio client
+    '''
+    message += ' ' + dt.datetime.today().strftime('%r')
     account = os.environ['TWILIO_ACCOUNT']
     token = os.environ['TWILIO_TOKEN']
     client = TwilioRestClient(account, token)
     message = client.messages.create(to="+13032299207", from_="+17206139570",
                                      body=message)
-if __name__ == '__main__':
+
+
+def get_docs():
+    '''
+    INPUT: None
+    OUTPUT: None
+    Run loop to scrap weld county website at desired pace. Upload scraped
+    documents to S3 bucket and removed from local machine.
+    '''
     df = pd.read_csv('https://s3.amazonaws.com/sebsbucket/data/new_read.csv')
     df.to_csv('data/new_read.csv', index=False)
+
     t_1 = time.time()
     for j in range(50):
         for i in range(5):
             t_2 = time.time()
-            get_docs(49, 'welddocs/')
-            print '{0}/{1} - {2}/{3} - sub time: {4:.2f} - total time: {5:.2f}'.format(j + 1, 10, i + 1, 5, (time.time() - t_2) / 60, (time.time() - t_1) / 60)
+            download_docs(49, 'welddocs/')
+            print_status(j, i, t_1, t_2)
+
             upload_docs('welddocs/')
             write_to_s3('data/new_read.csv')
-            print '{0}/{1} - {2}/{3} - sub time: {4:.2f} - total time: {5:.2f}'.format(j + 1, 10, i + 1, 5, (time.time() - t_2) / 60, (time.time() - t_1) / 60)
+            print_status(j, i, t_1, t_2)
         time.sleep(60)
-    twilio_message('Python script done! ' + dt.datetime.today().strftime('%r'))
+    twilio_message('Python script done!')
+
+if __name__ == '__main__':
+    get_docs()
+
 # ssh -i .ssh/sebawskey.pem ubuntu@52.90.0.248
 # scp -i .ssh/sebawskey.pem Desktop/DSI_capstone/landman/wc_clerk.py ubuntu@52.90.0.248:~/sebass/DSI_capstone/landman/
 # scp -i .ssh/sebawskey.pem

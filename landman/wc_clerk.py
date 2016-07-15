@@ -337,7 +337,7 @@ def print_status(j, i, t_1, t_2):
     i += 1
     t_1 = (time.time() - t_1) / 60
     t_2 = (time.time() - t_2) / 60
-    print '{0}/5 - {1}/10 - sub time: {2:.2f} - total time: {3:.2f}'.format(j, i, t_2, t_1)
+    print '{0}/50 - {1}/5 - sub time: {2:.2f} - total time: {3:.2f}'.format(j, i, t_2, t_1)
 
 
 def twilio_message(message):

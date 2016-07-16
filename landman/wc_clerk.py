@@ -14,6 +14,16 @@ import os
 import re
 
 
+class LandMan(object):
+    '''
+    He does everything a Landman can!
+    '''
+
+    def __init__(self):
+        self.keys = {}
+        self.urls = {}
+
+
 def get_url(fname, url_name):
     '''
     INPUT: file name, dictionary key

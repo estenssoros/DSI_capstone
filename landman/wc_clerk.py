@@ -13,17 +13,6 @@ import boto
 import os
 import re
 
-
-class LandMan(object):
-    '''
-    He does everything a Landman can!
-    '''
-
-    def __init__(self):
-        self.keys = {}
-        self.urls = {}
-
-
 def get_url(fname, url_name):
     '''
     INPUT: file name, dictionary key
@@ -58,7 +47,7 @@ def start_browser(fname='url.json'):
     br.addheaders = [
         ('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
 
-    url = get_url(fname, 'search_url')
+    url = get_url(fname, 'login')
     br.open(url)
     br.select_form(nr=1)
 
@@ -70,15 +59,14 @@ def start_browser(fname='url.json'):
     return br
 
 
-def test_html(html):
+def test_html(html, string):
     '''
     INPUT: html
     OUTPUT: boolean
 
     Test to see if html returned results
     '''
-    bad_search = 'No results found'
-    if bad_search in html:
+    if string in html:
         return False
     else:
         return True
@@ -105,7 +93,7 @@ def search_weld(br, start_date, search_count=1):
             br.form[k] = v
         req = br.submit()
         html = req.read()
-        if test_html(html):
+        if test_html(html, 'No results found'):
             print '      - start:', start_date.strftime('%m/%d/%Y')
             print '      - end:  ', end_date.strftime('%m/%d/%Y')
             yield html, start_date, end_date, br
@@ -167,29 +155,26 @@ def recursive_br(br, k=0):
 
     Recursive function to find all pages associate with a websearch
     '''
-    # read html and get results
+
     html = br.response().read()
     results = parse_html(html, k)
     k += len(results)
 
-    # find next link if exists
     found_next = False
     for link in br.links():
         if link.text == 'Next':
             found_next = True
             break
-    # follow next link if exists
+
     if found_next == True:
         print 'switching to:', link.url
-        # time.sleep(0.5)
         br.follow_link(link)
-        # recursion
         results.update(recursive_br(br, k))
         br.back()
     return results
 
 
-def doc_num_scraper(start_date=dt.datetime(2006, 1, 1)):
+def get_doc_numbers(start_date=dt.datetime(2006, 1, 1)):
     '''
     INPUT: None
     OUTPUT: None
@@ -223,6 +208,7 @@ def doc_num_scraper(start_date=dt.datetime(2006, 1, 1)):
             start_date = get_dates(coll)
             search = search_weld(br, start_date)
             html, start_date, end_date, br = search.next()
+
         # call recursive browser
         results = recursive_br(br)
 
@@ -359,8 +345,7 @@ def twilio_message(message):
     account = os.environ['TWILIO_ACCOUNT']
     token = os.environ['TWILIO_TOKEN']
     client = TwilioRestClient(account, token)
-    message = client.messages.create(to="+13032299207", from_="+17206139570",
-                                     body=message)
+    message = client.messages.create(to="+13032299207", from_="+17206139570", body=message)
 
 
 def sync_read():

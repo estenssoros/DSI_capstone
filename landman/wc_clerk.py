@@ -313,7 +313,7 @@ def write_to_s3(fname, directory=None):
     file_object = b.new_key(fname)
     file_object.set_contents_from_filename(fname, policy='public-read')
 
-    print '{} written to {}!'.format(fname, bucket_name)
+    print '{} written to {}!'.format(fname, b.name)
 
 
 def upload_docs(directory):

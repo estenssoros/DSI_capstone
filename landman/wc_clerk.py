@@ -1,5 +1,6 @@
 from __future__ import division
 from twilio.rest import TwilioRestClient
+from doc_reader import convert_pdfs
 from pymongo import MongoClient
 from bs4 import BeautifulSoup
 from dateutil import parser
@@ -384,14 +385,30 @@ def get_docs():
     twilio_message('Python script done!')
 
 
-def get_50_from_s3():
+def clear_docs(extension, directory):
+    for f in os.listdir(directory):
+        if f.endswith(extension):
+            os.remove(directory + f)
+
+
+def get_docs_from_s3(limit):
     df = sync_read(r=True)
     b = connect_s3()
 
-    return df
+    for i, k in enumerate(b.list('welddocs/')):
+        if i == limit: break
+        key_string = str(k.key)
+        if key_string.endswith('.pdf'):
+            k.get_contents_to_filename(key_string)
+
+
+    # clear_doc_cache('.pdf','welddocs/')
+    return
+
 
 if __name__ == '__main__':
-    df = get_50_from_s3()
+    convert_pdfs('test_pdf/','textdocs/')
+    clear_docs('.txt','textdocs/')
 
 '''
 ssh -i ~/.ssh/sebawskey.pem ubuntu@52.90.0.248

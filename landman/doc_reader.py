@@ -1,36 +1,40 @@
-import os
+#!/Users/sebastianestenssoro/anaconda/bin/python
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-from pdfminer.pdfdevice import PDFDevice, TagExtractor
+from pdfminer.pdfdevice import PDFDevice
 from pdfminer.pdfpage import PDFPage
-from pdfminer.converter import XMLConverter, HTMLConverter, TextConverter
+from pdfminer.converter import TextConverter
 from pdfminer.cmapdb import CMapDB
 from pdfminer.layout import LAParams
-from pdfminer.image import ImageWriter
+import os
+import time
+# main
 
 
-def convert(fname, from_dir, to_dir, m=1.0, w=0.2, l=0.3):
+def convert_pdfs(from_dir, to_dir):
+    # debug option
     debug = 0
+    # input option
     password = ''
     pagenos = set()
     maxpages = 0
-
-    outfile = '{0}/{1}'.format(to_dir, fname.replace('.pdf', '.txt'))
-    outtype = 'text'
-
+    outtype = "text"
     imagewriter = None
     rotation = 0
-
     layoutmode = 'normal'
     codec = 'utf-8'
+    # pageno = 1
+    scale = 1
     caching = True
+    showpageno = True
     laparams = LAParams()
 
-    laparams.char_margin = m
-    laparams.line_margin = l
-    laparams.word_margin = w
+    laparams.char_margin = float(2.0)
+    laparams.line_margin = float(0.5)
+    laparams.word_margin = float(0.1)
 
+    #
     PDFDocument.debug = debug
     PDFParser.debug = debug
     CMapDB.debug = debug
@@ -38,29 +42,47 @@ def convert(fname, from_dir, to_dir, m=1.0, w=0.2, l=0.3):
     PDFPageInterpreter.debug = debug
     PDFDevice.debug = debug
 
+    #
     rsrcmgr = PDFResourceManager(caching=caching)
 
-    outfp = file(outfile, 'w')
+    file_list = [x for x in os.listdir(from_dir) if x.endswith('.pdf')]
+    if len(file_list)==0:
+        print 'no .pdf files found'
+    else:
+        print 'Processing {} .pdf files'.format(len(file_list))
 
-    device = TextConverter(rsrcmgr, outfp, codec=codec, laparams=laparams, imagewriter=imagewriter)
+    for f in file_list:
+        t1 = time.time()
+        outfile = ''.join([to_dir, f.replace('.pdf', '.txt')])
+        fname = ''.join([from_dir, f])
+        string = '    {} to text ...'.format(f)
+        print
 
-    fp = file('{0}/{1}'.format(from_dir, fname), 'rb')
+        outfp = file(outfile, 'w')
 
-    interpreter = PDFPageInterpreter(rsrcmgr, device)
-    for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password, caching=caching, check_extractable=True):
-        page.rotate = (page.rotate + rotation) % 360
-        interpreter.process_page(page)
+        device = TextConverter(rsrcmgr, outfp, codec=codec, laparams=laparams, imagewriter=imagewriter)
 
-    fp.close()
-    device.close()
-    outfp.close()
+        fp = file(fname, 'rb')
 
-    print '{0} written to {1}'.format(fname, to_dir)
+        interpreter = PDFPageInterpreter(rsrcmgr, device)
+
+        try:
+            for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password, caching=caching, check_extractable=True):
+                page.rotate = (page.rotate + rotation) % 360
+                interpreter.process_page(page)
+            print string +' Completed! {0:.2f} seconds'.format(time.time() - t1)
+        except:
+            print string + ' - ERROR ENCOUNTERED'
+        fp.close()
+        device.close()
+        outfp.close()
     return
 
+
+def test_convert():
+    from_dir = 'test_pdf/'
+    to_dir = 'textdocs/'
+    convert_pdf(from_dir, to_dir)
+
 if __name__ == '__main__':
-    from_dir = 'test_pdf'
-    files = os.listdir(from_dir)
-    to_dir = 'textdocs'
-    for fname in files:
-        convert(fname, from_dir, to_dir)
+    test_convert()

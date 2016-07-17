@@ -13,6 +13,7 @@ import boto
 import os
 import re
 
+
 def get_url(fname, url_name):
     '''
     INPUT: file name, dictionary key
@@ -284,12 +285,7 @@ def get_aws_keys():
     return access_key, access_secret_key
 
 
-def write_to_s3(fname, directory=None):
-    '''
-    INPUT: File name, Directory
-    OUTPUT: None
-    write file at given directory to S3 bucket
-    '''
+def connect_s3():
     access_key, access_secret_key = get_aws_keys()
 
     conn = boto.connect_s3(access_key, access_secret_key)
@@ -299,6 +295,17 @@ def write_to_s3(fname, directory=None):
         raise ValueError('Bucket does not exist! WTF!')
     else:
         b = conn.get_bucket(bucket_name)
+        print 'Connected to {}!'.format(bucket_name)
+    return b
+
+
+def write_to_s3(fname, directory=None):
+    '''
+    INPUT: File name, Directory
+    OUTPUT: None
+    write file at given directory to S3 bucket
+    '''
+    b = connect_s3()
 
     if directory:
         fname = directory + fname
@@ -374,8 +381,12 @@ def get_docs():
         time.sleep(60)
     twilio_message('Python script done!')
 
+
+def get_50_from_s3():
+    b = connect_s3()
+
 if __name__ == '__main__':
-    pass
+    get_50_from_s3()
 '''
 ssh -i ~/.ssh/sebawskey.pem ubuntu@52.90.0.248
 scp -i ~/.ssh/sebawskey.pem <file> ubuntu@52.90.0.248:<path>

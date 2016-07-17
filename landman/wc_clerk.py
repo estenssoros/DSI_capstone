@@ -355,9 +355,11 @@ def twilio_message(message):
     message = client.messages.create(to="+13032299207", from_="+17206139570", body=message)
 
 
-def sync_read():
+def sync_read(r=False):
     df = pd.read_csv('https://s3.amazonaws.com/sebsbucket/data/new_read.csv')
     df.to_csv('data/new_read.csv', index=False)
+    if r:
+        return df
 
 
 def get_docs():
@@ -383,10 +385,14 @@ def get_docs():
 
 
 def get_50_from_s3():
+    df = sync_read(r=True)
     b = connect_s3()
 
+    return df
+
 if __name__ == '__main__':
-    get_50_from_s3()
+    df = get_50_from_s3()
+
 '''
 ssh -i ~/.ssh/sebawskey.pem ubuntu@52.90.0.248
 scp -i ~/.ssh/sebawskey.pem <file> ubuntu@52.90.0.248:<path>

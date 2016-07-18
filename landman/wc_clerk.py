@@ -445,5 +445,5 @@ def extract_text(limit):
 
 if __name__ == '__main__':
     for i in range(50):
-        exgtract_text(50)
+        extract_text(50)
     twilio_message('Done! Like wow!')

@@ -400,18 +400,9 @@ def get_docs_from_s3(limit):
         key_string = str(k.key)
         if key_string.endswith('.pdf'):
             k.get_contents_to_filename(key_string)
-
-
-    # clear_doc_cache('.pdf','welddocs/')
     return
 
 
 if __name__ == '__main__':
     convert_pdfs('test_pdf/','textdocs/')
     clear_docs('.txt','textdocs/')
-
-'''
-ssh -i ~/.ssh/sebawskey.pem ubuntu@52.90.0.248
-scp -i ~/.ssh/sebawskey.pem <file> ubuntu@52.90.0.248:<path>
-scp -i ~/.ssh/sebawskey.pem -r <direcotry> ubuntu@52.90.0.248:<path>
-'''

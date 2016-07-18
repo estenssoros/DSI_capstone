@@ -8,7 +8,6 @@ import shutil, glob
 import itertools
 from functools import wraps
 
-from version import __version__
 from PIL import Image
 import yaml
 
@@ -105,8 +104,7 @@ class PyPDFOCR(object):
         """
         p = argparse.ArgumentParser(
                 description = "Convert scanned PDFs into their OCR equivalent.  Depends on GhostScript and Tesseract-OCR being installed.",
-                epilog = "PyPDFOCR version %s (Copyright 2013 Virantha Ekanayake)" % __version__,
-                )
+                epilog = "PyPDFOCR version  (Copyright 2013 Virantha Ekanayake)")
 
         p.add_argument('-d', '--debug', action='store_true',
             default=False, dest='debug', help='Turn on debugging')
@@ -463,10 +461,12 @@ class PyPDFOCR(object):
         if self.enable_email:
             self._send_email(pdf_filename, ocr_pdffilename, filing)
 
-def main(): # pragma: no cover
+def main(argv): # pragma: no cover
     multiprocessing.freeze_support()
     script = PyPDFOCR()
-    script.go(sys.argv[1:])
+    script.go(argv)
 
 if __name__ == '__main__':
-    main()
+    file_list = [x for x in os.listdir('test_pdf') if x.endswith('.pdf')]
+    for f in file_list:
+        main([f])

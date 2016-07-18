@@ -442,8 +442,9 @@ def extract_text(limit):
     write_all_to_s3('.txt', text_dir)
     clear_docs('.pdf', pdf_dir)
     clear_docs('.txt', text_dir)
-
-if __name__ == '__main__':
+def loop_it():
     for i in range(50):
         extract_text(50)
     twilio_message('Done! Like wow!')
+if __name__ == '__main__':
+    pass

@@ -444,5 +444,6 @@ def extract_text(limit):
     clear_docs('.txt', text_dir)
 
 if __name__ == '__main__':
-    extract_text(500)
+    for i in range(50):
+        exgtract_text(50)
     twilio_message('Done! Like wow!')

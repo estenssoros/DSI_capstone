@@ -423,6 +423,7 @@ def get_docs_from_s3(limit):
     write_to_s3('data/new_read.csv')
 
     return
+
 def fix_docs():
     df = pd.read_csv('data/new_read.csv')
     b = connect_s3()
@@ -448,7 +449,4 @@ def fix_docs():
     upload_docs('welddocs/','.pdf')
 
 if __name__ == '__main__':
-    b = connect_s3()
-    docs = [x for x in b.list('welddocs/') if not 'DOC' in x]
-    for i in range(50):
-        fix_docs()
+    fix_docs()

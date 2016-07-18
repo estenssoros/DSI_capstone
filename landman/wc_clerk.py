@@ -1,6 +1,6 @@
 from __future__ import division
 from twilio.rest import TwilioRestClient
-from doc_reader import convert_pdfs, ocr_main
+from doc_reader import convert_pdfs, ocr_docs
 from pymongo import MongoClient
 from bs4 import BeautifulSoup
 from dateutil import parser
@@ -317,6 +317,18 @@ def write_to_s3(fname, directory=None):
     print '{} written to {}!'.format(fname, b.name)
 
 
+def write_all_to_s3(ext, directory):
+    b = connect_s3()
+    if not directory.endswith('/'):
+        directory += '/'
+    for fname in os.listdir(directory):
+        if fname.endswith(ext):
+            write_to = directory + fname
+            file_object = b.new_key(write_to)
+            file_object.set_contents_from_filename(write_to, policy='public-read')
+            print '{0} written to {1}!'.format(write_to, b.name)
+
+
 def upload_docs(directory, ext):
     '''
     INPUT: directory
@@ -394,59 +406,43 @@ def clear_docs(extension, directory):
 def get_docs_from_s3(limit):
     df = sync_read(r=True)
     b = connect_s3()
-    read_doc_nums = df['new_doc_num'][df['converted'] == False].values.tolist()
+    not_read = df['doc'][df['converted']==False].values.tolist()
 
     i = 0
     for k in b.list('welddocs/'):
 
-        key_string = str(k.key)
+        key_string = str(k.name)
 
         if key_string.endswith('.pdf'):
             fname = key_string.replace('welddocs/', '').replace('.pdf', '')
-            doc_num = fname.split('_')[0]
-            doc_id = fname.split('_')[1]
-
-            if not doc_num.startswith('DOC'):
-                doc_num = 'DOCC' + doc_num
-
-            m = df['new_doc_num'] == doc_num
-            n = df['doc_id'].astype(str) == doc_id
-            o = df['converted'] = False
-            if len(df[(m & n)]) == 1:
-                df.loc[(m & n), 'converted'] = True
-            else:
-                raise ValueError('Data frame length unnaceptable doc:{0}_{1}'.format(doc_num, doc_id))
-
-            k.get_contents_to_filename(key_string)
+            if fname in not_read:
+                m = df['doc'] == fname
+                if len(df.loc[m]) != 1:
+                    df.to_csv('data/new_read.csv', index=False)
+                    write_to_s3('data/new_read.csv')
+                    raise ValueError('bad doc: {0}'.format(fname))
+                else:
+                    df.loc[m, 'converted'] = True
+                    k.get_contents_to_filename(key_string)
+                    i += 1
+            if i == limit:
+                break
 
     df.to_csv('data/new_read.csv', index=False)
     write_to_s3('data/new_read.csv')
-
     return
 
-def fix_docs():
-    df = pd.read_csv('data/new_read.csv')
-    b = connect_s3()
-    i = 0
-    for k in b.list('welddocs/'):
-        k_name = k.name.replace('welddocs/', '')
 
-        if k_name.endswith('.pdf') and not k_name.startswith('DOC'):
-            print k_name
-            new_k_name = 'DOCC' + k_name
-
-            test_name = new_k_name.replace('.pdf', '')
-            test_name = test_name.split('_')[0]
-
-            if not test_name in df['new_doc_num'].values.tolist():
-                print 'asdfasdfasdf'
-                raise ValueError
-            k.get_contents_to_filename('welddocs/' + new_k_name)
-            k.delete()
-            i += 1
-            if i == 50:
-                break
-    upload_docs('welddocs/','.pdf')
+def extract_text(limit):
+    pdf_dir = 'welddocs/'
+    text_dir = 'textdocs/'
+    get_docs_from_s3(limit)
+    ocr_docs(pdf_dir)
+    convert_pdfs(pdf_dir, text_dir, '_ocr.pdf')
+    write_all_to_s3('.txt', text_dir)
+    clear_docs('.pdf', pdf_dir)
+    clear_docs('.txt', text_dir)
 
 if __name__ == '__main__':
-    fix_docs()
+    extract_text(500)
+    # twilio_message('done!')

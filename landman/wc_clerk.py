@@ -406,7 +406,7 @@ def clear_docs(extension, directory):
 def get_docs_from_s3(limit):
     df = sync_read(r=True)
     b = connect_s3()
-    not_read = df['doc'][df['converted']==False].values.tolist()
+    not_read = df['doc'][df['converted'] == False].values.tolist()
 
     i = 0
     for k in b.list('welddocs/'):
@@ -433,15 +433,26 @@ def get_docs_from_s3(limit):
     return
 
 
+def rename_files(ext, from_dir, to_dir):
+    for fname in os.listdir(from_dir):
+        if fname.endswith(ext):
+            os.rename(from_dir + fname, to_dir + fname)
+
+
 def extract_text(limit):
     pdf_dir = 'welddocs/'
+    ocr_dir = 'ocrdocs/'
     text_dir = 'textdocs/'
+
     get_docs_from_s3(limit)
     ocr_docs(pdf_dir)
-    convert_pdfs(pdf_dir, text_dir, '_ocr.pdf')
-    write_all_to_s3('.txt', text_dir)
+    rename_files('_ocr.pdf', pdf_dir, ocr_dir)
+
+    write_all_to_s3('_ocr.pdf', ocr_dir)
     clear_docs('.pdf', pdf_dir)
-    clear_docs('.txt', text_dir)
+    clear_docs('.pdf', ocr_dir)
+
+
 def loop_it():
     for i in range(50):
         extract_text(50)

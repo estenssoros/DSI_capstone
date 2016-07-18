@@ -1,6 +1,6 @@
 from __future__ import division
 from twilio.rest import TwilioRestClient
-from doc_reader import convert_pdfs
+from doc_reader import convert_pdfs, ocr_main
 from pymongo import MongoClient
 from bs4 import BeautifulSoup
 from dateutil import parser
@@ -317,7 +317,7 @@ def write_to_s3(fname, directory=None):
     print '{} written to {}!'.format(fname, b.name)
 
 
-def upload_docs(directory):
+def upload_docs(directory, ext):
     '''
     INPUT: directory
     OUTPUT: None
@@ -326,7 +326,7 @@ def upload_docs(directory):
     if not directory.endswith('/'):
         directory += '/'
     for f in os.listdir(directory):
-        if f.endswith('.pdf'):
+        if f.endswith(ext):
             write_to_s3(f, directory)
             os.remove(directory + f)
 
@@ -378,7 +378,7 @@ def get_docs():
             download_docs(49, 'welddocs/')
             print_status(j, i, t_1, t_2)
 
-            upload_docs('welddocs/')
+            upload_docs('welddocs/', '.pdf')
             write_to_s3('data/new_read.csv')
             print_status(j, i, t_1, t_2)
         time.sleep(60)
@@ -394,15 +394,61 @@ def clear_docs(extension, directory):
 def get_docs_from_s3(limit):
     df = sync_read(r=True)
     b = connect_s3()
+    read_doc_nums = df['new_doc_num'][df['converted'] == False].values.tolist()
 
-    for i, k in enumerate(b.list('welddocs/')):
-        if i == limit: break
+    i = 0
+    for k in b.list('welddocs/'):
+
         key_string = str(k.key)
-        if key_string.endswith('.pdf'):
-            k.get_contents_to_filename(key_string)
-    return
 
+        if key_string.endswith('.pdf'):
+            fname = key_string.replace('welddocs/', '').replace('.pdf', '')
+            doc_num = fname.split('_')[0]
+            doc_id = fname.split('_')[1]
+
+            if not doc_num.startswith('DOC'):
+                doc_num = 'DOCC' + doc_num
+
+            m = df['new_doc_num'] == doc_num
+            n = df['doc_id'].astype(str) == doc_id
+            o = df['converted'] = False
+            if len(df[(m & n)]) == 1:
+                df.loc[(m & n), 'converted'] = True
+            else:
+                raise ValueError('Data frame length unnaceptable doc:{0}_{1}'.format(doc_num, doc_id))
+
+            k.get_contents_to_filename(key_string)
+
+    df.to_csv('data/new_read.csv', index=False)
+    write_to_s3('data/new_read.csv')
+
+    return
+def fix_docs():
+    df = pd.read_csv('data/new_read.csv')
+    b = connect_s3()
+    i = 0
+    for k in b.list('welddocs/'):
+        k_name = k.name.replace('welddocs/', '')
+
+        if k_name.endswith('.pdf') and not k_name.startswith('DOC'):
+            print k_name
+            new_k_name = 'DOCC' + k_name
+
+            test_name = new_k_name.replace('.pdf', '')
+            test_name = test_name.split('_')[0]
+
+            if not test_name in df['new_doc_num'].values.tolist():
+                print 'asdfasdfasdf'
+                raise ValueError
+            k.get_contents_to_filename('welddocs/' + new_k_name)
+            k.delete()
+            i += 1
+            if i == 50:
+                break
+    upload_docs('welddocs/','.pdf')
 
 if __name__ == '__main__':
-    convert_pdfs('test_pdf/','textdocs/')
-    clear_docs('.txt','textdocs/')
+    b = connect_s3()
+    docs = [x for x in b.list('welddocs/') if not 'DOC' in x]
+    for i in range(50):
+        fix_docs()

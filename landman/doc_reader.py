@@ -7,12 +7,13 @@ from pdfminer.pdfpage import PDFPage
 from pdfminer.converter import TextConverter
 from pdfminer.cmapdb import CMapDB
 from pdfminer.layout import LAParams
+from pypdfocr.pypdfocr import main as ocr_main
 import os
 import time
 # main
 
 
-def convert_pdfs(from_dir, to_dir):
+def convert_pdfs(from_dir, to_dir, ext):
     # debug option
     debug = 0
     # input option
@@ -45,8 +46,8 @@ def convert_pdfs(from_dir, to_dir):
     #
     rsrcmgr = PDFResourceManager(caching=caching)
 
-    file_list = [x for x in os.listdir(from_dir) if x.endswith('.pdf')]
-    if len(file_list)==0:
+    file_list = [x for x in os.listdir(from_dir) if x.endswith(ext)]
+    if len(file_list) == 0:
         print 'no .pdf files found'
     else:
         print 'Processing {} .pdf files'.format(len(file_list))
@@ -70,7 +71,7 @@ def convert_pdfs(from_dir, to_dir):
             for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password, caching=caching, check_extractable=True):
                 page.rotate = (page.rotate + rotation) % 360
                 interpreter.process_page(page)
-            print string +' Completed! {0:.2f} seconds'.format(time.time() - t1)
+            print string + ' Completed! {0:.2f} seconds'.format(time.time() - t1)
         except:
             print string + ' - ERROR ENCOUNTERED'
         fp.close()
@@ -79,10 +80,13 @@ def convert_pdfs(from_dir, to_dir):
     return
 
 
+def ocr_docs(directory):
+    for f in os.listdir(directory):
+        if f.endswith('.pdf'):
+            ocr_main(directory + f)
+
 def test_convert():
-    from_dir = 'test_pdf/'
-    to_dir = 'textdocs/'
-    convert_pdf(from_dir, to_dir)
+    convert_pdfs('welddocs/','welddocs/','.pdf')
 
 if __name__ == '__main__':
     test_convert()

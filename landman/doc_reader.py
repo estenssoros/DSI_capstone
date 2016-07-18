@@ -7,7 +7,7 @@ from pdfminer.pdfpage import PDFPage
 from pdfminer.converter import TextConverter
 from pdfminer.cmapdb import CMapDB
 from pdfminer.layout import LAParams
-from pypdfocr.pypdfocr import main as ocr_main
+from pypdfocr.pypdfocr import ocr_main
 import os
 import time
 # main

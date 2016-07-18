@@ -445,4 +445,4 @@ def extract_text(limit):
 
 if __name__ == '__main__':
     extract_text(500)
-    # twilio_message('done!')
+    twilio_message('Done! Like wow!')

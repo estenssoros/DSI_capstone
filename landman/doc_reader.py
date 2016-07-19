@@ -94,4 +94,4 @@ def test_convert():
     convert_pdfs('welddocs/', 'welddocs/', '.pdf')
 
 if __name__ == '__main__':
-    test_convert()
+    pass    

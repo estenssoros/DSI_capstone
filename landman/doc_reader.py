@@ -85,7 +85,8 @@ def ocr_docs(directory):
     pool = Pool(processes=cpu_count())
     files = [directory + f for f in os.listdir(directory) if f.endswith('.pdf')]
     # pool.map(ocr_main, files)
-    for f in files:
+    for i, f in enumerate(files):
+        print 'working on file {0} of {1}...'.format(i,len(f))
         ocr_main(f)
 
 

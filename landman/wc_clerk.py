@@ -455,6 +455,7 @@ def extract_text(limit):
 
 def loop_it(loops):
     for i in range(loops):
+        print '-------------- LOOP: {0} --------------'.format(i)
         extract_text(cpu_count())
     twilio_message('Done! Like wow!')
 

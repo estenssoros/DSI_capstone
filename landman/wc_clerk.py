@@ -453,9 +453,10 @@ def extract_text(limit):
     clear_docs('.pdf', pdf_dir)
     clear_docs('.pdf', ocr_dir)
 
+
 def loop_it(loops):
     for i in range(loops):
-        print '-------------- LOOP: {0}/{1} --------------'.format(i+1,loops)
+        print '\n\n-------------- LOOP: {0}/{1} --------------'.format(i + 1, loops)
         extract_text(cpu_count())
     twilio_message('Done! Like wow!')
 

@@ -5,3 +5,5 @@
 *.ipynb
 *.pyc
 *.txt
+*.hocr
+*.jpg

@@ -453,11 +453,10 @@ def extract_text(limit):
     clear_docs('.pdf', pdf_dir)
     clear_docs('.pdf', ocr_dir)
 
-
 def loop_it(loops):
     for i in range(loops):
         extract_text(cpu_count())
     twilio_message('Done! Like wow!')
-    
+
 if __name__ == '__main__':
     pass

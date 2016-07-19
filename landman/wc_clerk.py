@@ -470,9 +470,7 @@ def loop_it(loops):
         limit = cpu_count() * 12
         extract_ocr(limit)
     count = loops * limit
-    ip = os.uname()[1].split('-')[-1]
-    land_monkey = read_json('ip.json', ip)
-    twilio_message('Done! Processed: {0} from  {1}'.format(count, land_monkey))
+    twilio_message('Done! Processed: {0} from  {1}'.format(count, os.uname()[1]))
 
 if __name__ == '__main__':
     pass

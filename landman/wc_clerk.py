@@ -458,7 +458,8 @@ def loop_it(loops):
     for i in range(loops):
         print '\n\n-------------- LOOP: {0}/{1} --------------'.format(i + 1, loops)
         extract_text(cpu_count())
-    twilio_message('Done! Like wow! - {0}'.format(os.uname()[1]))
+    count = loops * cpu_count()
+    twilio_message('Done! Processed: {0} from  {1}'.format(count, os.uname()[1]))
 
 if __name__ == '__main__':
     pass

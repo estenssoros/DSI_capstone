@@ -1,6 +1,7 @@
 from __future__ import division
 from twilio.rest import TwilioRestClient
 from doc_reader import convert_pdfs, ocr_docs
+from multiprocessing import cpu_count
 from pymongo import MongoClient
 from bs4 import BeautifulSoup
 from dateutil import parser
@@ -453,8 +454,10 @@ def extract_text(limit):
     clear_docs('.pdf', ocr_dir)
 
 
-def loop_it():
-    extract_text(50)
+def loop_it(loops):
+    for i in range(loops):
+        extract_text(cpu_count())
     twilio_message('Done! Like wow!')
+    
 if __name__ == '__main__':
     pass

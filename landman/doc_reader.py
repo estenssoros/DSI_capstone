@@ -84,7 +84,9 @@ def convert_pdfs(from_dir, to_dir, ext):
 def ocr_docs(directory):
     pool = Pool(processes=cpu_count())
     files = [directory + f for f in os.listdir(directory) if f.endswith('.pdf')]
-    pool.map(ocr_main, files)
+    # pool.map(ocr_main, files)
+    for f in files:
+        ocr_main(f)
 
 
 def test_convert():

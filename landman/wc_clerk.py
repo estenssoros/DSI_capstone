@@ -16,7 +16,7 @@ import os
 import re
 
 
-def get_url(fname, url_name):
+def read_json(fname, url_name):
     '''
     INPUT: file name, dictionary key
     OUTPUT: url form dictionary
@@ -50,7 +50,7 @@ def start_browser(fname='url.json'):
     br.addheaders = [
         ('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
 
-    url = get_url(fname, 'login')
+    url = read_json(fname, 'login')
     br.open(url)
     br.select_form(nr=1)
 
@@ -237,7 +237,7 @@ def download_docs(limit, directory):
     OUTPUT: None
 
     '''
-    base_url = get_url('url.json', 'doc_url')
+    base_url = read_json('url.json', 'doc_url')
     if not directory.endswith('/'):
         directory += '/'
 
@@ -404,18 +404,18 @@ def clear_docs(extension, directory):
             os.remove(directory + f)
 
 
-def get_docs_from_s3(limit):
+def get_docs_from_s3(limit, s3_dir):
     df = sync_read(r=True)
     b = connect_s3()
     not_read = df['doc'][df['converted'] == False].values.tolist()
 
     i = 0
-    for k in b.list('welddocs/'):
+    for k in b.list(s3_dir):
 
         key_string = str(k.name)
 
         if key_string.endswith('.pdf'):
-            fname = key_string.replace('welddocs/', '').replace('.pdf', '')
+            fname = key_string.replace(s3_dir, '').replace('.pdf', '')
             if fname in not_read:
                 m = df['doc'] == fname
                 if len(df.loc[m]) != 1:
@@ -440,12 +440,11 @@ def rename_files(ext, from_dir, to_dir):
             os.rename(from_dir + fname, to_dir + fname)
 
 
-def extract_text(limit):
+def extract_ocr(limit):
     pdf_dir = 'welddocs/'
     ocr_dir = 'ocrdocs/'
-    text_dir = 'textdocs/'
 
-    get_docs_from_s3(limit)
+    get_docs_from_s3(limit, 'welddocs/')
     ocr_docs(pdf_dir)
     rename_files('_ocr.pdf', pdf_dir, ocr_dir)
 
@@ -454,12 +453,26 @@ def extract_text(limit):
     clear_docs('.pdf', ocr_dir)
 
 
+def get_text(limit):
+    ocr_dir = 'ocrdocs/'
+    text_dir = 'textdocs'
+
+
+def progress(s3_dir='ocrdocs/'):
+    b = connect_s3()
+    files = [1 for f in b.list(s3_dir) if f.name.endswith('.pdf')]
+    return len(files)
+
+
 def loop_it(loops):
     for i in range(loops):
         print '\n\n-------------- LOOP: {0}/{1} --------------'.format(i + 1, loops)
-        extract_text(50)
-    count = loops * 50
-    twilio_message('Done! Processed: {0} from  {1}'.format(count, os.uname()[1]))
+        limit = cpu_count() * 12
+        extract_ocr(limit)
+    count = loops * limit
+    ip = os.uname()[1].split('-')[-1]
+    land_monkey = read_json('ip.json', ip)
+    twilio_message('Done! Processed: {0} from  {1}'.format(count, land_monkey))
 
 if __name__ == '__main__':
     pass

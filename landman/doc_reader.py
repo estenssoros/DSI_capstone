@@ -8,6 +8,7 @@ from pdfminer.converter import TextConverter
 from pdfminer.cmapdb import CMapDB
 from pdfminer.layout import LAParams
 from pypdfocr.pypdfocr import ocr_main
+from multiprocessing import Pool, cpu_count
 import os
 import time
 # main
@@ -81,12 +82,13 @@ def convert_pdfs(from_dir, to_dir, ext):
 
 
 def ocr_docs(directory):
-    for f in os.listdir(directory):
-        if f.endswith('.pdf'):
-            ocr_main(directory + f)
+    pool = Pool(processes=cpu_count())
+    files = [directory + f for f in os.listdir(directory) if f.endswith('.pdf')]
+    pool.map(ocr_main, files)
+
 
 def test_convert():
-    convert_pdfs('welddocs/','welddocs/','.pdf')
+    convert_pdfs('welddocs/', 'welddocs/', '.pdf')
 
 if __name__ == '__main__':
     test_convert()

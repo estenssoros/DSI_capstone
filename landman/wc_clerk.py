@@ -421,33 +421,16 @@ def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
         df = sync_read(r=True)
         if df_col not in df.columns:
             df[df_col] = False
-        not_read = df['doc'][df[df_col] == False].values.tolist()
-    i = 0
-    for k in b.list(s3_dir):
-        key_string = str(k.name)
-        if key_string.endswith(ext):
-
-            if df_col:
-                fname = key_string.replace(s3_dir, '').replace(ext, '')
-                if fname in not_read:
-                    m = df['doc'] == fname
-                    if len(df.loc[m]) != 1:
-                        df.to_csv('data/new_read.csv', index=False)
-                        write_to_s3('data/new_read.csv')
-                        raise ValueError('bad doc: {0}'.format(fname))
-                    else:
-                        df.loc[m, df_col] = True
-                        k.get_contents_to_filename(key_string)
-                        i += 1
-
-            else:
-                k.get_contents_to_filename(key_string)
-                i += 1
-            if i == limit:
-                break
-    if df_col:
-        df.to_csv('data/new_read.csv', index=False)
+        not_read = df['doc'][df[df_col] == False].values.tolist()[:limit]
+        m = df['doc'].isin(not_read)
+        df.loc[m, df_col] = True
+        df.to_csv('data/new_read.csv',index=False)
         write_to_s3('data/new_read.csv')
+
+    for doc in not_read:
+        fname = ''.join([s3_dir,doc,ext])
+        key = b.new_key(fname)
+        key.get_contents_to_filename(fname)
     return
 
 
@@ -510,8 +493,10 @@ def extract_text(limit):
 
 def loop_text(loops):
     for i in range(loops):
-        print '----------------- LOOP: {} -----------------'.format(i + 1)
+        print '----------------- LOOP: {0}/{1} -----------------'.format(i + 1, loops)
         extract_text(cpu_count() * 12)
     twilio_message('read {0} text docs to s3'.format(loops * cpu_count() * 12))
+
+
 if __name__ == '__main__':
     pass

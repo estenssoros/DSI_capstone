@@ -414,9 +414,7 @@ def clear_docs(extension, directory):
 
 
 def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
-
     b = connect_s3()
-
     if df_col:
         df = sync_read(r=True)
         if df_col not in df.columns:
@@ -424,13 +422,18 @@ def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
         not_read = df['doc'][df[df_col] == False].values.tolist()[:limit]
         m = df['doc'].isin(not_read)
         df.loc[m, df_col] = True
-        df.to_csv('data/new_read.csv',index=False)
+        df.to_csv('data/new_read.csv', index=False)
         write_to_s3('data/new_read.csv')
 
-    for doc in not_read:
-        fname = ''.join([s3_dir,doc,ext])
-        key = b.new_key(fname)
-        key.get_contents_to_filename(fname)
+        for doc in not_read:
+            fname = ''.join([s3_dir, doc, ext])
+            key = b.new_key(fname)
+            key.get_contents_to_filename(fname)
+    else:
+        for i, key in enumerate(b.list(s3_dir)):
+            key.get_contents_to_filename(key.name)
+            if i == limit:
+                break
     return
 
 
@@ -444,19 +447,13 @@ def extract_ocr(limit):
     pdf_dir = 'welddocs/'
     ocr_dir = 'ocrdocs/'
 
-    get_docs_from_s3(limit, 'welddocs/', '.pdf', 'converted')
+    get_docs_from_s3(limit, pdf_dir, '.pdf', 'converted')
     ocr_docs(pdf_dir)
     rename_files('_ocr.pdf', pdf_dir, ocr_dir)
 
-    write_all_to_s3('_ocr.pdf', ocr_dir)
+    write_all_to_s3('.pdf', ocr_dir)
     clear_docs('.pdf', pdf_dir)
     clear_docs('.pdf', ocr_dir)
-
-
-def get_text(limit):
-    ocr_dir = 'ocrdocs/'
-    text_dir = 'textdocs'
-
 
 def progress(s3_dir='ocrdocs/'):
     b = connect_s3()
@@ -467,7 +464,8 @@ def progress(s3_dir='ocrdocs/'):
 def loop_it(loops):
     for i in range(loops):
         print '\n\n-------------- LOOP: {0}/{1} --------------'.format(i + 1, loops)
-        limit = cpu_count() * 12
+        # limit = cpu_count() * 12
+        limit = 3
         extract_ocr(limit)
     count = loops * limit
     twilio_message('Done! Processed: {0} from  {1}'.format(count, os.uname()[1]))
@@ -487,8 +485,7 @@ def extract_text(limit):
     get_docs_from_s3(limit, 'welddocs/', '.pdf', df_col='text')
     multi_convert_pdfs('welddocs/', 'textdocs/')
     write_all_to_s3('.txt', 'textdocs/')
-    clear_dict = {'.pdf': 'welddocs/', '.txt': 'textdocs/'}
-    clear_docs_from_dict(clear_dict)
+    clear_docs_from_dict({'.pdf': 'welddocs/', '.txt': 'textdocs/'})
 
 
 def loop_text(loops):

@@ -464,8 +464,8 @@ def progress(s3_dir='ocrdocs/'):
 def loop_it(loops):
     for i in range(loops):
         print '\n\n-------------- LOOP: {0}/{1} --------------'.format(i + 1, loops)
-        # limit = cpu_count() * 12
-        limit = 3
+        limit = cpu_count() * 12
+        # limit = 3
         extract_ocr(limit)
     count = loops * limit
     twilio_message('Done! Processed: {0} from  {1}'.format(count, os.uname()[1]))

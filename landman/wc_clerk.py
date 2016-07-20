@@ -1,12 +1,14 @@
 from __future__ import division
+from doc_reader import convert_pdfs, ocr_docs, multi_convert_pdfs
 from twilio.rest import TwilioRestClient
-from doc_reader import convert_pdfs, ocr_docs
 from multiprocessing import cpu_count
+from collections import Counter
 from pymongo import MongoClient
 from bs4 import BeautifulSoup
 from dateutil import parser
 import datetime as dt
 import pandas as pd
+import numpy as np
 import mechanize
 import cookielib
 import json
@@ -398,39 +400,54 @@ def get_docs():
     twilio_message('Python script done!')
 
 
+def clear_docs_from_dict(clear_dict):
+    for extension, directory in clear_dict.iteritems():
+        for f in os.listdir(directory):
+            if f.endswith(extension):
+                os.remove(directory + f)
+
+
 def clear_docs(extension, directory):
     for f in os.listdir(directory):
         if f.endswith(extension):
             os.remove(directory + f)
 
 
-def get_docs_from_s3(limit, s3_dir):
-    df = sync_read(r=True)
-    b = connect_s3()
-    not_read = df['doc'][df['converted'] == False].values.tolist()
+def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
 
+    b = connect_s3()
+
+    if df_col:
+        df = sync_read(r=True)
+        if df_col not in df.columns:
+            df[df_col] = False
+        not_read = df['doc'][df[df_col] == False].values.tolist()
     i = 0
     for k in b.list(s3_dir):
-
         key_string = str(k.name)
+        if key_string.endswith(ext):
 
-        if key_string.endswith('.pdf'):
-            fname = key_string.replace(s3_dir, '').replace('.pdf', '')
-            if fname in not_read:
-                m = df['doc'] == fname
-                if len(df.loc[m]) != 1:
-                    df.to_csv('data/new_read.csv', index=False)
-                    write_to_s3('data/new_read.csv')
-                    raise ValueError('bad doc: {0}'.format(fname))
-                else:
-                    df.loc[m, 'converted'] = True
-                    k.get_contents_to_filename(key_string)
-                    i += 1
+            if df_col:
+                fname = key_string.replace(s3_dir, '').replace(ext, '')
+                if fname in not_read:
+                    m = df['doc'] == fname
+                    if len(df.loc[m]) != 1:
+                        df.to_csv('data/new_read.csv', index=False)
+                        write_to_s3('data/new_read.csv')
+                        raise ValueError('bad doc: {0}'.format(fname))
+                    else:
+                        df.loc[m, df_col] = True
+                        k.get_contents_to_filename(key_string)
+                        i += 1
+
+            else:
+                k.get_contents_to_filename(key_string)
+                i += 1
             if i == limit:
                 break
-
-    df.to_csv('data/new_read.csv', index=False)
-    write_to_s3('data/new_read.csv')
+    if df_col:
+        df.to_csv('data/new_read.csv', index=False)
+        write_to_s3('data/new_read.csv')
     return
 
 
@@ -444,7 +461,7 @@ def extract_ocr(limit):
     pdf_dir = 'welddocs/'
     ocr_dir = 'ocrdocs/'
 
-    get_docs_from_s3(limit, 'welddocs/')
+    get_docs_from_s3(limit, 'welddocs/', '.pdf', 'converted')
     ocr_docs(pdf_dir)
     rename_files('_ocr.pdf', pdf_dir, ocr_dir)
 
@@ -472,5 +489,29 @@ def loop_it(loops):
     count = loops * limit
     twilio_message('Done! Processed: {0} from  {1}'.format(count, os.uname()[1]))
 
+
+def doc_stats(fname):
+    with open(fname) as f:
+        text = f.read()
+    text = text.lower()
+    words = text.split()
+    c_words = Counter(words)
+    print len(c_words)
+    return len(c_words)
+
+
+def extract_text(limit):
+    get_docs_from_s3(limit, 'welddocs/', '.pdf', df_col='text')
+    multi_convert_pdfs('welddocs/', 'textdocs/')
+    write_all_to_s3('.txt', 'textdocs/')
+    clear_dict = {'.pdf': 'welddocs/', '.txt': 'textdocs/'}
+    clear_docs_from_dict(clear_dict)
+
+
+def loop_text(loops):
+    for i in range(loops):
+        print '----------------- LOOP: {} -----------------'.format(i + 1)
+        extract_text(cpu_count() * 12)
+    twilio_message('read {0} text docs to s3'.format(loops * cpu_count() * 12))
 if __name__ == '__main__':
     pass

@@ -401,13 +401,13 @@ def get_docs():
 
 
 def clear_docs_from_dict(clear_dict):
-    for extension, directory in clear_dict.iteritems():
-        for f in os.listdir(directory):
-            if f.endswith(extension):
-                os.remove(directory + f)
+    for extension, directories in clear_dict.iteritems():
+        for directory in directories:
+            clear_docs(extension, directory)
 
 
 def clear_docs(extension, directory):
+    print 'removing {0} from {1}'.format(extension, directory)
     for f in os.listdir(directory):
         if f.endswith(extension):
             os.remove(directory + f)
@@ -455,6 +455,7 @@ def extract_ocr(limit):
     clear_docs('.pdf', pdf_dir)
     clear_docs('.pdf', ocr_dir)
 
+
 def progress(s3_dir='ocrdocs/'):
     b = connect_s3()
     files = [1 for f in b.list(s3_dir) if f.name.endswith('.pdf')]
@@ -485,7 +486,7 @@ def extract_text(limit):
     get_docs_from_s3(limit, 'welddocs/', '.pdf', df_col='text')
     multi_convert_pdfs('welddocs/', 'textdocs/')
     write_all_to_s3('.txt', 'textdocs/')
-    clear_docs_from_dict({'.pdf': 'welddocs/', '.txt': 'textdocs/'})
+    clear_docs_from_dict({'.pdf': ['welddocs/'], '.txt': ['textdocs/']})
 
 
 def loop_text(loops):

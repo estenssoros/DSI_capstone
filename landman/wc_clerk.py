@@ -321,6 +321,11 @@ def write_to_s3(fname, directory=None):
 
 
 def write_all_to_s3(ext, directory):
+    '''
+    INPUT: file extension, directory
+    OUTPUT: None
+    uploads all files of a given extension type to s3 in the same file path schema
+    '''
     b = connect_s3()
     if not directory.endswith('/'):
         directory += '/'
@@ -330,20 +335,6 @@ def write_all_to_s3(ext, directory):
             file_object = b.new_key(write_to)
             file_object.set_contents_from_filename(write_to, policy='public-read')
             print '{0} written to {1}!'.format(write_to, b.name)
-
-
-def upload_docs(directory, ext):
-    '''
-    INPUT: directory
-    OUTPUT: None
-    Passes documents to write_to_s3 and removes from local machine
-    '''
-    if not directory.endswith('/'):
-        directory += '/'
-    for f in os.listdir(directory):
-        if f.endswith(ext):
-            write_to_s3(f, directory)
-            os.remove(directory + f)
 
 
 def print_status(j, i, t_1, t_2):
@@ -372,6 +363,13 @@ def twilio_message(message):
 
 
 def sync_read(r=False):
+    '''
+    INPUT: boolean(optional)
+    OUTPUT: dataframe (optional)
+
+    Downloads the most recent version of new_read.csv from s3.
+    If boolean supplied, returns dataframe
+    '''
     df = pd.read_csv('https://s3.amazonaws.com/sebsbucket/data/new_read.csv')
     df.to_csv('data/new_read.csv', index=False)
     if r:
@@ -393,7 +391,8 @@ def get_docs():
             download_docs(49, 'welddocs/')
             print_status(j, i, t_1, t_2)
 
-            upload_docs('welddocs/', '.pdf')
+            write_all_to_s3('.pdf', 'welddocs/')
+            clear_docs('.pdf', 'welddocs/')
             write_to_s3('data/new_read.csv')
             print_status(j, i, t_1, t_2)
         time.sleep(60)
@@ -401,12 +400,22 @@ def get_docs():
 
 
 def clear_docs_from_dict(clear_dict):
+    '''
+    INPUT: dictionary
+    OUTPUT: None
+    Calls clear_docs on extension and files supplied in clear dict
+    '''
     for extension, directories in clear_dict.iteritems():
         for directory in directories:
             clear_docs(extension, directory)
 
 
 def clear_docs(extension, directory):
+    '''
+    INPUT: file extension, directory
+    OUTPUT: None
+    Removes all files with given extension from directory
+    '''
     print 'removing {0} from {1}'.format(extension, directory)
     for f in os.listdir(directory):
         if f.endswith(extension):
@@ -414,6 +423,15 @@ def clear_docs(extension, directory):
 
 
 def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
+    '''
+    INPUT: limit, s3 directory, file extension, column name (optional)
+    OUTPUT: None
+    Connects to s3 and pulls the first limit # of documents from new_read.csv
+    that are listed as not being read. Immediately uploads new_read.csv to s3.
+    Downloads the limit# of documents to specified file with extenion. If no
+    column is provided, downloads the first limit # of documents with extension
+    from s3 bucke file.
+    '''
     b = connect_s3()
     if df_col:
         df = sync_read(r=True)
@@ -438,12 +456,23 @@ def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
 
 
 def rename_files(ext, from_dir, to_dir):
+    '''
+    INPUT: extension, directory, directory
+    OUTPUT: None
+    Moves files with extension from from_dir to to_dir
+    '''
     for fname in os.listdir(from_dir):
         if fname.endswith(ext):
             os.rename(from_dir + fname, to_dir + fname)
 
 
 def extract_ocr(limit):
+    '''
+    INPUT: #
+    OUTPUT: None
+    AUtomates process of downloaded documents form s3, running OCR, uploading
+    OCR documents to s3, and removing documents from local machine.
+    '''
     pdf_dir = 'welddocs/'
     ocr_dir = 'ocrdocs/'
 
@@ -456,13 +485,12 @@ def extract_ocr(limit):
     clear_docs('.pdf', ocr_dir)
 
 
-def progress(s3_dir='ocrdocs/'):
-    b = connect_s3()
-    files = [1 for f in b.list(s3_dir) if f.name.endswith('.pdf')]
-    return len(files)
-
-
 def loop_it(loops):
+    '''
+    INPUT: #
+    OUTPUT: None
+    Runs extract_ocr a loops # of times and sends a twillio message when complete
+    '''
     for i in range(loops):
         print '\n\n-------------- LOOP: {0}/{1} --------------'.format(i + 1, loops)
         limit = cpu_count() * 12
@@ -472,17 +500,12 @@ def loop_it(loops):
     twilio_message('Done! Processed: {0} from  {1}'.format(count, os.uname()[1]))
 
 
-def doc_stats(fname):
-    with open(fname) as f:
-        text = f.read()
-    text = text.lower()
-    words = text.split()
-    c_words = Counter(words)
-    print len(c_words)
-    return len(c_words)
-
-
 def extract_text(limit):
+    '''
+    INPUT: integer
+    OUTPUT: None
+    Reads pdf docs from s3 and converts to text
+    '''
     get_docs_from_s3(limit, 'welddocs/', '.pdf', df_col='text')
     multi_convert_pdfs('welddocs/', 'textdocs/')
     write_all_to_s3('.txt', 'textdocs/')
@@ -490,6 +513,11 @@ def extract_text(limit):
 
 
 def loop_text(loops):
+    '''
+    INPUT: integer
+    OUTPUT: None
+    Loops extract_text() and sends twillio message when complete
+    '''
     for i in range(loops):
         print '----------------- LOOP: {0}/{1} -----------------'.format(i + 1, loops)
         extract_text(cpu_count() * 12)

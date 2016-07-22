@@ -1,5 +1,5 @@
 from LM_AWS import get_docs_from_s3, write_all_to_s3
-from LM_doc_reader import ocr_docs
+from LM_Doc_Reader import ocr_docs
 from LM_Util import rename_files, clear_docs_from_dict, read_json
 from multiprocessing import cpu_count
 import os

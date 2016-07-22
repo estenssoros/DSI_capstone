@@ -1,6 +1,6 @@
 from LM_AWS import get_docs_from_s3, write_all_to_s3
 from LM_Util import clear_docs_from_dict, twilio_message
-from LM_doc_reader import multi_convert_pdfs
+from LM_Doc_Reader import multi_convert_pdfs
 
 def extract_text(limit, s3_dir):
     '''

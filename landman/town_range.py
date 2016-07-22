@@ -42,13 +42,4 @@ def create_df():
 
 
 if __name__=='__main__':
-# Create MongoClient
-    client = MongoClient()
-    db = client['og_production']
-    coll = db['weld']
-# get weld df
-    # df = create_df()
-    # for i,r in df.iterrows():
-    #     coll.insert_one(r.to_dict())
-    `cogis_url = 'https://cogcc.state.co.us/cogis/ProductionSearch.asp'`
-    html = requests.get(cogis_url).content
+    pass

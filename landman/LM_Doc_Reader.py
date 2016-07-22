@@ -114,6 +114,8 @@ def convert_pdf(args):
     rsrcmgr = PDFResourceManager(caching=caching)
 
     t1 = time.time()
+    if from_dir == 'ocrdocs/':
+        fname = fname.replace('_ocr', '')
     outfile = ''.join([to_dir, fname.replace('.pdf', '.txt')])
     fname = ''.join([from_dir, fname])
     string = '{0}: {1} to text...'.format(i + 1, fname)

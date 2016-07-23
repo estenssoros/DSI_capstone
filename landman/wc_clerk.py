@@ -1,6 +1,6 @@
 from LM_Text import loop_text
 from LM_OCR import loop_ocr
-from LM_AWS import sync_read
+from LM_AWS import sync_read, write_to_s3
 from os import system
 
 if __name__ == '__main__':
@@ -10,3 +10,4 @@ if __name__ == '__main__':
     print '  -loop_text(#loops)'
     print '  -loop_ocr(#loops)'
     print '  -sync_read(r=True)'
+    print '  -write_to_s3(file)'

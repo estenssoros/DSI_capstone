@@ -44,17 +44,19 @@ def convert_pdf(args):
     rsrcmgr = PDFResourceManager(caching=caching)
 
     t1 = time.time()
-    if from_dir == 'ocrdocs/':
-        fname = fname.replace('_ocr', '')
-    outfile = ''.join([to_dir, fname.replace('.pdf', '.txt')])
-    fname = ''.join([from_dir, fname])
+
     string = '{0}: {1} to text...'.format(i + 1, fname)
 
+    from_file = ''.join([from_dir, fname])
+    fp = file(from_file, 'rb')
+
+    if from_dir == 'ocrdocs/':
+        fname = fname.replace('_ocr', '')
+
+    outfile = ''.join([to_dir, fname.replace('.pdf', '.txt')])
     outfp = file(outfile, 'w')
 
     device = TextConverter(rsrcmgr, outfp, codec=codec, laparams=laparams, imagewriter=imagewriter)
-
-    fp = file(fname, 'rb')
 
     interpreter = PDFPageInterpreter(rsrcmgr, device)
 

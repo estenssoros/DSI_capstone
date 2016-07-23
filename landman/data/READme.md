@@ -1,4 +1,4 @@
-# Repository for .csv files
+# Riepository for .csv files
 ```
  .csv is part of .gitignore at the time of this update, the following files are located in this directory:
 ```

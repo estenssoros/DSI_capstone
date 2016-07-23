@@ -9,8 +9,9 @@ from pdfminer.cmapdb import CMapDB
 from pdfminer.layout import LAParams
 from pypdfocr.pypdfocr import ocr_main
 from multiprocessing import Pool, cpu_count
-import os
 import time
+import os
+
 
 def convert_pdf(args):
     i, arg = args

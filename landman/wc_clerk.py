@@ -1,7 +1,15 @@
 from LM_Text import loop_text
 from LM_OCR import loop_ocr
-from LM_AWS import sync_read, write_to_s3
+from LM_AWS import sync_read, write_to_s3, connect_s3
 from os import system
+
+def check_docs():
+    needs_ocr = []
+    b = connect_s3
+    for fname in b.list('textdocs/'):
+        if fname.endswith('.txt'):
+            key = b.new_key(fname)
+            # text = 
 
 if __name__ == '__main__':
     system('clear')

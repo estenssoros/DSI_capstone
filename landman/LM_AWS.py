@@ -106,11 +106,10 @@ def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
             try:
                 key = b.new_key(fname)
                 key.get_contents_to_filename(fname)
-            except:
-                pass
+            except Exception as e:
+                print e
     else:
         for i, key in enumerate(b.list(s3_dir)):
             key.get_contents_to_filename(key.name)
             if i == limit:
                 break
-    return

@@ -65,8 +65,8 @@ def convert_pdf(args):
             page.rotate = (page.rotate + rotation) % 360
             interpreter.process_page(page)
         print string + ' Completed! {0:.2f} seconds'.format(time.time() - t1)
-    except:
-        print string + ' - ERROR ENCOUNTERED'
+    except Exception as e:
+        print string + ' - ERROR ENCOUNTERED {0}'.format(e)
     fp.close()
     device.close()
     outfp.close()

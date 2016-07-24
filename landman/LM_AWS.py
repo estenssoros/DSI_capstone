@@ -103,8 +103,11 @@ def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
 
         for doc in not_read:
             fname = ''.join([s3_dir, doc, ext])
-            key = b.new_key(fname)
-            key.get_contents_to_filename(fname)
+            try:
+                key = b.new_key(fname)
+                key.get_contents_to_filename(fname)
+            except:
+                pass
     else:
         for i, key in enumerate(b.list(s3_dir)):
             key.get_contents_to_filename(key.name)

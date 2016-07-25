@@ -97,7 +97,7 @@ def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
         df.loc[m, df_col] = True
         df.to_csv('data/new_read.csv', index=False)
         write_to_s3('data/new_read.csv')
-        print '{0} documents remaining in queue'.format(len(df[df[df_col] == True]))
+        print '{0} documents remaining in queue'.format(len(df[df[df_col] == False]))
         if s3_dir == 'ocrdocs/':
             not_read = [x + '_ocr' for x in not_read]
 

@@ -16,7 +16,7 @@ def extract_text(limit, s3_dir):
     clear_docs_from_dict({'.pdf': [s3_dir], '.txt': ['textdocs/']})
 
 
-def loop_text(loops):
+def loop_text(loops,s3_dir):
     '''
     INPUT: integer
     OUTPUT: None
@@ -24,5 +24,5 @@ def loop_text(loops):
     '''
     for i in range(loops):
         print '----------------- LOOP: {0}/{1} -----------------'.format(i + 1, loops)
-        extract_text(cpu_count() * 5, 'ocrdocs/')
+        extract_text(cpu_count() * 5, s3_dir)
     twilio_message('read {0} text docs to s3'.format(loops * cpu_count() * 12))

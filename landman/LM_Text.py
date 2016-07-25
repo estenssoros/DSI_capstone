@@ -16,7 +16,7 @@ def extract_text(limit, s3_dir):
     clear_docs_from_dict({'.pdf': [s3_dir], '.txt': ['textdocs/']})
 
 
-def loop_text(loops,s3_dir):
+def loop_text(loops, s3_dir='ocrdocs'):
     '''
     INPUT: integer
     OUTPUT: None

@@ -6,6 +6,7 @@ import pandas as pd
 from multiprocessing import cpu_count, Pool
 from string import maketrans, punctuation
 
+
 def word_count_docs(key):
     text = key.get_contents_as_string()
     text = text.replace('\n', ' ')
@@ -14,31 +15,30 @@ def word_count_docs(key):
     size = key.size
     return doc, w_count, size
 
+
 def clean_docs(key):
     text = key.get_contents_as_string()
-    spaces = ' '*len(punctuation)
-
-    table = string.maketrans(punctuation,spaces)
+    spaces = ' ' * len(punctuation)
+    table = string.maketrans(punctuation, spaces)
     text = text.translate(table)
+    replace = ['\n','\x0c']
+    for r in replace:
+        text = text.replace(r, ' ')
+    doc = key.name.replace('textdocs/', '').replace('.txt', '')
+    return doc, text
 
-def multi_word_count():
+
+def multi_word_count(func, cols):
     b = connect_s3()
     keys = [key for key in list(b.list('textdocs/')) if key.name.endswith('.txt')]
     print 'keys read in!'
-
     print 'beggining document analysis!'
     pool = Pool(processes=cpu_count() - 1)
-    results = pool.map(word_count_docs, keys)
+    results = pool.map(func, keys)
     print 'done!'
-    return pd.DataFrame(results, columns=['doc', 'w_count', 'size'])
+    return pd.DataFrame(results, columns=cols)
 
 
 if __name__ == '__main__':
     system('clear')
-    print 'Welcome to Virtual Landman!\n'
-    print 'At this stage, options are:'
-    print '  -loop_text(#loops)'
-    print '  -loop_ocr(#loops)'
-    print '  -sync_read(r=True)'
-    print '  -write_to_s3(file)'
-    print '  -connect_s3()'
+    welcome()

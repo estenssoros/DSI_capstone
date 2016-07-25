@@ -24,5 +24,5 @@ def loop_text(loops):
     '''
     for i in range(loops):
         print '----------------- LOOP: {0}/{1} -----------------'.format(i + 1, loops)
-        extract_text(cpu_count() * 10, 'ocrdocs/')
+        extract_text(cpu_count() * 5, 'ocrdocs/')
     twilio_message('read {0} text docs to s3'.format(loops * cpu_count() * 12))

@@ -4,6 +4,7 @@ from LM_AWS import sync_read, write_to_s3, connect_s3
 from os import system
 import pandas as pd
 
+
 def word_count_docs():
     df = pd.DataFrame(columns=['doc', 'w_count'])
     b = connect_s3
@@ -15,7 +16,7 @@ def word_count_docs():
             df = df.append({'doc': doc, 'w_count': len(text.split())}, ignore_index=True)
     return df
 
-    
+
 if __name__ == '__main__':
     system('clear')
     print 'Welcome to Virtual Landman!\n'

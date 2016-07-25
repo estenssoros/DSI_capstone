@@ -16,15 +16,16 @@ def word_count_docs(key):
 
 
 def multi_word_count():
-    df = pd.DataFrame(columns=['doc', 'w_count', 'size'])
     b = connect_s3()
     keys = [key for key in list(b.list('textdocs/')) if key.name.endswith('.txt')]
     print 'keys read in!'
+    
     print 'beggining document analysis!'
     pool = Pool(processes=cpu_count() - 1)
     results = pool.map(word_count_docs, keys)
     print 'done!'
-    return results
+    return pd.DataFrame(results, columns=['doc', 'w_count', 'size'])
+
 
 if __name__ == '__main__':
     system('clear')

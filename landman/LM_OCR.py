@@ -30,7 +30,7 @@ def loop_ocr(loops):
     '''
     for i in range(loops):
         print '\n\n-------------- LOOP: {0}/{1} --------------'.format(i + 1, loops)
-        limit = cpu_count() * 12
+        limit = cpu_count() * 10
         # limit = 3
         extract_ocr(limit)
     ips = read_json('ip.json')

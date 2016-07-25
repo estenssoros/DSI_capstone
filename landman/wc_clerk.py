@@ -1,6 +1,7 @@
 from LM_Text import loop_text
 from LM_OCR import loop_ocr
 from LM_AWS import sync_read, write_to_s3, connect_s3
+from LM_Util import welcome
 from os import system
 import pandas as pd
 from multiprocessing import cpu_count, Pool

@@ -72,6 +72,6 @@ def rename_files(ext, from_dir, to_dir):
         if fname.endswith(ext):
             os.rename(from_dir + fname, to_dir + fname)
 def welcome():
-    with open(welcome.txt) as f:
-        for line in f:
-            print line
+    with open("welcome.txt") as f:
+        text = f.read()
+        print text

@@ -33,10 +33,13 @@ def loop_ocr(loops):
         limit = cpu_count() * 10
         # limit = 3
         extract_ocr(limit)
-    ips = read_json('ip.json')
     ip = os.uname()[1]
-    if ip in ips.keys():
-        ip = ips[ip]
+    try:
+        ips = read_json('ip.json')
+        if ip in ips.keys():
+            ip = ips[ip]
+    except:
+        pass
 
     count = loops * limit
     twilio_message('Done! Processed: {0} from  {1}'.format(count, ip))

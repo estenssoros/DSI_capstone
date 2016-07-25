@@ -24,8 +24,8 @@ def multi_word_count():
     pool = Pool(processes=cpu_count() - 1)
     results = pool.map(word_count_docs, keys)
     print 'done!'
-    df = pd.DataFrame(results, columns=['doc', 'w_count', 'size'])
-    df['doc']
+    return pd.DataFrame(results, columns=['doc', 'w_count', 'size'])
+
 
 if __name__ == '__main__':
     system('clear')

@@ -36,5 +36,5 @@ if __name__ == '__main__':
             text = text.replace('\n', ' ')
             doc = key.name.replace('txtdocs/', '').replace('.txt', '')
             df = df.append({'doc': doc, 'w_count': len(text.split()),'size':key.size}, ignore_index=True)
-    if i % 1000 == 0:
-        print i
+        if i % 1000 == 0:
+            print i

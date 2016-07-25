@@ -6,14 +6,14 @@ import pandas as pd
 
 
 def word_count_docs():
-    df = pd.DataFrame(columns=['doc', 'w_count'])
+    df = pd.DataFrame(columns=['doc', 'w_count','size'])
     b = connect_s3()
     for i, key in enumerate(b.list('textdocs/')):
         if key.name.endswith('.txt'):
             text = key.get_contents_as_string()
             text = text.replace('\n', ' ')
             doc = key.name.replace('txtdocs/', '').replace('.txt', '')
-            df = df.append({'doc': doc, 'w_count': len(text.split())}, ignore_index=True)
+            df = df.append({'doc': doc, 'w_count': len(text.split()),'size':key.size}, ignore_index=True)
     if i % 1000 == 0:
         print i
     return df
@@ -27,3 +27,14 @@ if __name__ == '__main__':
     print '  -loop_ocr(#loops)'
     print '  -sync_read(r=True)'
     print '  -write_to_s3(file)'
+    print '  -connect_s3()'
+    df = pd.DataFrame(columns=['doc', 'w_count','size'])
+    b = connect_s3()
+    for i, key in enumerate(b.list('textdocs/')):
+        if key.name.endswith('.txt'):
+            text = key.get_contents_as_string()
+            text = text.replace('\n', ' ')
+            doc = key.name.replace('txtdocs/', '').replace('.txt', '')
+            df = df.append({'doc': doc, 'w_count': len(text.split()),'size':key.size}, ignore_index=True)
+    if i % 1000 == 0:
+        print i

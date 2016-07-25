@@ -4,7 +4,7 @@ from LM_AWS import sync_read, write_to_s3, connect_s3
 from os import system
 import pandas as pd
 from multiprocessing import cpu_count, Pool
-from string import table, punctuation
+from string import maketrans, punctuation
 
 def word_count_docs(key):
     text = key.get_contents_as_string()

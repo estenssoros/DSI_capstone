@@ -8,12 +8,14 @@ import pandas as pd
 def word_count_docs():
     df = pd.DataFrame(columns=['doc', 'w_count'])
     b = connect_s3
-    for key in b.list('textdocs/'):
+    for i, key in enumerate(b.list('textdocs/')):
         if key.name.endswith('.txt'):
             text = key.get_contents_as_string()
             text = text.replace('\n', ' ')
             doc = key.name.replace('txtdocs/', '').replace('.txt', '')
             df = df.append({'doc': doc, 'w_count': len(text.split())}, ignore_index=True)
+    if i % 1000 == 0:
+        print i
     return df
 
 

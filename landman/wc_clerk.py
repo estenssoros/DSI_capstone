@@ -20,7 +20,7 @@ def word_count_docs(key):
 def clean_docs(key):
     text = key.get_contents_as_string()
     spaces = ' ' * len(punctuation)
-    table = string.maketrans(punctuation, spaces)
+    table = maketrans(punctuation, spaces)
     text = text.translate(table)
     replace = ['\n','\x0c']
     for r in replace:

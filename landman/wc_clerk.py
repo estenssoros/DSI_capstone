@@ -7,7 +7,7 @@ import pandas as pd
 
 def word_count_docs():
     df = pd.DataFrame(columns=['doc', 'w_count'])
-    b = connect_s3
+    b = connect_s3()
     for i, key in enumerate(b.list('textdocs/')):
         if key.name.endswith('.txt'):
             text = key.get_contents_as_string()

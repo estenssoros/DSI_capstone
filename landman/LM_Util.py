@@ -3,7 +3,7 @@ import json
 import os
 import pandas as pd
 
-def read_json(fname, url_name):
+def read_json(fname):
     '''
     INPUT: file name, dictionary key
     OUTPUT: url form dictionary

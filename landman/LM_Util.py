@@ -94,3 +94,42 @@ def get_words():
     words = [w for w in words if len(w) > 2]
     max_length = max(len(word) for word in words)
     return words, max_length
+
+DICT = enchant.Dict("en_US")
+
+def enchant_text(word):
+    if DICT.check(word):
+        return word
+    else:
+        try:
+            return DICT.suggest(word)[0]
+        except:
+            return " "
+
+def clean_text_file():
+    with open('clean.txt') as f:
+        text = f.read()
+    text = text.lower()
+    text = re.findall('[a-z]+', text)
+    text = [x for x in text if len(x) > 2]
+
+    text = [enchant_text(x) for x in text]
+    with open('clean.txt', 'w') as f:
+        f.write(' '.join(text).lower())
+
+def update_vocab():
+    fname = 'words_by_frequency.txt'
+    clean = 'clean.txt'
+    with open(clean) as f:
+        text = f.read()
+    with open(clean, 'w') as f:
+        f.write('')
+
+    with open(fname) as f:
+        master = f.read()
+
+    master = master + ' ' + text
+
+    with open(fname,'w') as f:
+        f.write(master)
+    print 'written to {0}'.format(fname)

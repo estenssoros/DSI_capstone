@@ -75,6 +75,15 @@ def write_all_to_s3(ext, directory):
             file_object.set_contents_from_filename(write_to, policy='public-read')
             print '{0} written to {1}!'.format(write_to, b.name)
 
+def read_from_s3(fname, directory=None):
+    if directory:
+        fname = directory + fname
+    b = connect_s3()
+    try:
+        key = b.new_key(fname)
+        key.get_contents_to_filename(fname)
+    except Exception as e:
+        print e
 
 def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
     '''
@@ -91,7 +100,7 @@ def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
         df = sync_read(r=True)
         if df_col not in df.columns:
             df[df_col] = False
-        sample = df['doc'][df['converted']==False].sample(limit)
+        sample = df['doc'][df['converted'] == False].sample(limit)
         not_read = sample.values.tolist()
 
         m = df['doc'].isin(not_read)

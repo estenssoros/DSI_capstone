@@ -91,7 +91,8 @@ def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
         df = sync_read(r=True)
         if df_col not in df.columns:
             df[df_col] = False
-        not_read = df['doc'][df[df_col] == False].values.tolist()[:limit]
+        sample = df['doc'][df['converted']==False].sample(limit)
+        not_read = sample.values.tolist()
 
         m = df['doc'].isin(not_read)
         df.loc[m, df_col] = True
@@ -110,6 +111,7 @@ def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
                 print e
     else:
         for i, key in enumerate(b.list(s3_dir)):
-            key.get_contents_to_filename(key.name)
-            if i == limit:
-                break
+            if key.name.endswith(ext):
+                key.get_contents_to_filename(key.name)
+                if i == limit:
+                    break

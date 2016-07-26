@@ -2,6 +2,8 @@ from twilio.rest import TwilioRestClient
 import json
 import os
 import pandas as pd
+import re
+
 
 def read_json(fname):
     '''
@@ -14,6 +16,7 @@ def read_json(fname):
             jdict = json.loads(line)
     return j_dict
 
+
 def twilio_message(message):
     '''
     INPUT: message
@@ -24,6 +27,7 @@ def twilio_message(message):
     token = os.environ['TWILIO_TOKEN']
     client = TwilioRestClient(account, token)
     message = client.messages.create(to="+13032299207", from_="+17206139570", body=message)
+
 
 def print_status(j, i, t_1, t_2):
     '''
@@ -36,8 +40,6 @@ def print_status(j, i, t_1, t_2):
     t_1 = (time.time() - t_1) / 60
     t_2 = (time.time() - t_2) / 60
     print '{0}/50 - {1}/5 - sub time: {2:.2f} - total time: {3:.2f}'.format(j, i, t_2, t_1)
-
-
 
 
 def clear_docs_from_dict(clear_dict):
@@ -62,6 +64,7 @@ def clear_docs(extension, directory):
         if f.endswith(extension):
             os.remove(directory + f)
 
+
 def rename_files(ext, from_dir, to_dir):
     '''
     INPUT: extension, directory, directory
@@ -71,7 +74,23 @@ def rename_files(ext, from_dir, to_dir):
     for fname in os.listdir(from_dir):
         if fname.endswith(ext):
             os.rename(from_dir + fname, to_dir + fname)
+
+
 def welcome():
     with open("welcome.txt") as f:
         text = f.read()
         print text
+
+
+def get_words():
+    # words = []
+    # with open('words.txt') as f:
+    #     for line in f:
+    #         words.append(line.strip())
+    with open('words_by_frequency.txt') as f:
+        text = f.read()
+    text = text.lower()
+    words = re.findall('[a-z]+', text)
+    words = [w for w in words if len(w) > 2]
+    max_length = max(len(word) for word in words)
+    return words, max_length

@@ -6,13 +6,13 @@
 [x] create pipeline for converting pdf to text
 [x] finish converting pdfs to ocr pdfs
 [x] convert pdfs to text
-[ ] QC text documents
-    [ ]repeat ocr/pdf-to-text steps
+[x] QC text documents
+    [x]repeat ocr/pdf-to-text steps
 
-[ ] finish lease vocabulary
-[ ] determine words that need removal
-[ ] remove punctuation
+[x] remove punctuation
 [ ] build sliding algorithm to parse words
+    [x] finish lease vocabulary
+    [ ] find method to accurately interpret and pull out words
 ```
 
 ### MAPPING

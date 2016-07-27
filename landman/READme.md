@@ -30,9 +30,11 @@
 
 ### MAPPING
 ```
-[ ] figure out how to shape-file
+[x] figure out how to shape-file
 [ ] plot lease documents on map
-
+    [x] town-range detail
+    [ ] section detail
+    [ ] quarter detail
 ```
 ### ADDITIONAL DATA
 ```

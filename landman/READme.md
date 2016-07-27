@@ -8,11 +8,11 @@
 [x] convert pdfs to text
 [x] QC text documents
     [x]repeat ocr/pdf-to-text steps
-
 [x] remove punctuation
 [ ] build sliding algorithm to parse words
     [x] finish lease vocabulary
     [ ] find method to accurately interpret and pull out words
+[ ] determine if lease has kicker
 ```
 
 ### MAPPING

@@ -19,8 +19,7 @@ def clean_text(df):
     return df
 
 
-def find_words(args, words=None, maxword=None, wordcost=None):
-    doc, instring = args
+def find_words(text, words=None, maxword=None, wordcost=None):
     if words is None:
         with open('words_by_frequency.txt') as f:
             words = set(f.read().split())
@@ -30,23 +29,36 @@ def find_words(args, words=None, maxword=None, wordcost=None):
 
     if wordcost is None:
         wordcost = dict((k, log((i + 1) * log(len(words)))) for i, k in enumerate(words))
+
     results = []
-    while len(instring) > 0:
+    while len(text) > 0:
         start = 0
         end = start + 1
         options = []
         for i in range(maxword):
-            if instring[start:end] in words:
-                options.append(instring[start:end])
+            if text[start:end] in words:
+                options.append(text[start:end])
             end += 1
         if options:
             option = min(options, key=lambda x: wordcost.get(x))
-            instring = instring[len(option):]
+            text = text[len(option):]
             results.append(option)
         else:
-            instring = instring[1:]
+            text = text[1:]
 
-    return doc, ' '.join(results)
+    return results
+
+
+def parse_clusters(args, words=None, maxword=None, wordcost=None):
+    doc, text = args
+    clusters = text.split()
+    results = []
+    for cluster in clusters:
+        if cluster in words:
+            results.append(cluster)
+        else:
+            results.extend(find_words(cluster))
+    return results
 
 
 def multi_find_words(df):
@@ -54,8 +66,6 @@ def multi_find_words(df):
     pool = Pool(processes=cpu_count() - 1)
     results = pool.map(find_words, tuples)
     return pd.DataFrame(results, columns=['doc', 'text'])
-
-
 
 
 if __name__ == '__main__':

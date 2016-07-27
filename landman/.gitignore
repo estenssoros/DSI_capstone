@@ -2,7 +2,6 @@
 *.csv
 *.pdf
 *.json
-*.ipynb
 *.pyc
 *.txt
 *.hocr

@@ -78,7 +78,7 @@ def rename_files(ext, from_dir, to_dir):
 
 
 def welcome():
-    with open("welcome.txt") as f:
+    with open("text/welcome.txt") as f:
         text = f.read()
         print text
 

@@ -1,8 +1,8 @@
-from LM_Text import loop_text
-from LM_OCR import loop_ocr
-from LM_AWS import sync_read, write_to_s3, connect_s3, get_docs_from_s3, read_from_s3
-from LM_Util import welcome, get_words
-from LM_SpellCheck import correct
+from LM.LM_Text import loop_text
+from LM.LM_OCR import loop_ocr
+from LM.LM_AWS import sync_read, write_to_s3, connect_s3, get_docs_from_s3, read_from_s3
+from LM.LM_Util import welcome, get_words
+from LM.LM_SpellCheck import correct
 from os import system
 import pandas as pd
 import time

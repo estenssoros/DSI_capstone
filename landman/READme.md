@@ -3,15 +3,28 @@
 ### NLP
 ```
 [x] determine which pdfs needs to be ocrd
+
 [x] create pipeline for converting pdf to text
+
 [x] finish converting pdfs to ocr pdfs
+
 [x] convert pdfs to text
+
 [x] QC text documents
     [x]repeat ocr/pdf-to-text steps
-[x] remove punctuation
+
+[x] clean text
+    [x] remove punctuation
+    [x] lowercase
+
 [ ] build sliding algorithm to parse words
     [x] finish lease vocabulary
     [ ] find method to accurately interpret and pull out words
+    [x] create ngrams
+    [x] how to find probability of ngram occurring
+
+[ ] text effectiveness of spell checker on manual documents
+
 [ ] determine if lease has kicker
 ```
 

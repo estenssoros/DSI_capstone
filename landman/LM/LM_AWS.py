@@ -75,6 +75,7 @@ def write_all_to_s3(ext, directory):
             file_object.set_contents_from_filename(write_to, policy='public-read')
             print '{0} written to {1}!'.format(write_to, b.name)
 
+
 def read_from_s3(fname, directory=None):
     if directory:
         fname = directory + fname
@@ -85,7 +86,8 @@ def read_from_s3(fname, directory=None):
     except Exception as e:
         print e
 
-def get_docs_from_s3(limit, s3_dir, ext, df_col=None):
+
+def get_docs_from_s3(limit=10, s3_dir='welddocs/', ext='.pdf', df_col=None):
     '''
     INPUT: limit, s3 directory, file extension, column name (optional)
     OUTPUT: None

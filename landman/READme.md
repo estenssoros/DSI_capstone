@@ -23,10 +23,14 @@
     [x] create ngrams
     [x] how to find probability of ngram occurring
     [ ] do the damn thing
-    
+
 [x] text effectiveness of spell checker on manual documents
 
-[ ] determine if lease has kicker
+[ ] extract mapping information
+    [ ] township
+    [ ] range
+    [ ] section
+    [ ] quarter
 ```
 
 ### MAPPING

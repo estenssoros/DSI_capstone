@@ -15,11 +15,8 @@ from collections import Counter, defaultdict
 
 def get_text_df(fname):
     df = pd.read_csv(fname)
-    # replace=['\n','\xe2','\x80','\x98','\x94','\x9','\x94']
-    # for r in replace:
-    #     df['text'] = df['text'].str.replace(r,' ')
-    df['text'] = df['text'].str.lower().str.replace('[^a-z]', ' ')
-    df['text'] = df.apply(lambda x: ''.join(x['text'].split()), axis=1)
+    # df['text'] = df['text'].str.lower().str.replace('[^a-z]', ' ')
+    df['text'] = df.apply(lambda x: ' '.join(x['text'].split()), axis=1)
     print 'Data frame read in!'
     return df
 

@@ -19,11 +19,12 @@
 
 [ ] build sliding algorithm to parse words
     [x] finish lease vocabulary
-    [ ] find method to accurately interpret and pull out words
+    [x] find method to accurately interpret and pull out words
     [x] create ngrams
     [x] how to find probability of ngram occurring
-
-[ ] text effectiveness of spell checker on manual documents
+    [ ] do the damn thing
+    
+[x] text effectiveness of spell checker on manual documents
 
 [ ] determine if lease has kicker
 ```
@@ -35,6 +36,7 @@
     [x] town-range detail
     [ ] section detail
     [ ] quarter detail
+
 ```
 ### ADDITIONAL DATA
 ```

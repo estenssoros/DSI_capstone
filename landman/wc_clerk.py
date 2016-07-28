@@ -11,43 +11,54 @@ from math import log
 from multiprocessing import Pool, cpu_count
 import re
 from collections import Counter, defaultdict
+from textblob import TextBlob
 
 
 def get_text_df(fname):
     df = pd.read_csv(fname)
-    # df['text'] = df['text'].str.lower().str.replace('[^a-z]', ' ')
-    df['text'] = df.apply(lambda x: ' '.join(x['text'].split()), axis=1)
+    df['text'] = df['text'].str.lower().str.replace('[^a-z0-9]', ' ')
+    df['text'] = df.apply(lambda x: ''.join(x['text'].split()), axis=1)
     print 'Data frame read in!'
     return df
 
 
-def find_words(args, words=None, maxword=None, wordcost=None):
+def find_words(args, words=None, maxword=None, keywords=None):
     '''
 
     '''
     doc, text = args
 
     if words is None:
-        with open('words_by_frequency.txt') as f:
+        with open('text/words_by_frequency.txt') as f:
             words = set(f.read().lower().split())
 
     if maxword is None:
         maxword = max(len(x) for x in words)
 
-    if wordcost is None:
-        # wordcost = dict((k, log((i + 1) * log(len(words)))) for i, k in enumerate(words))
-        wordcost = defaultdict(lambda: 1)
-        for word in words:
-            wordcost[word] += 1
+    if keywords is None:
+        with open('text/keywords.txt') as f:
+            keywords = set(f.read().lower().split())
+            min_key = min(len(x) for x in keywords)
+
+    maxword = max(max(len(x) for x in keywords), maxword)
 
     results = []
+    found=[]
     while len(text) > 0:
         start = 0
         end = start + 1
         options = []
         for i in range(maxword):
-            if text[start:end] in words:
-                options.append(text[start:end])
+            test_word = text[start:end]
+            if test_word in words:
+                options.append(test_word)
+                if test_word in keywords:
+                    found.append(test_word)
+            # elif len(test_word) > 3 and key_word_loc == None and test_word[0] in [w[0] for w in keywords]:
+            #     corr = correct(test_word)
+            #     print test_word, corr
+            #     if corr in keywords:
+            #         key_word_loc = start
             end += 1
 
         if options:
@@ -57,7 +68,7 @@ def find_words(args, words=None, maxword=None, wordcost=None):
         else:
             text = text[1:]
 
-    return doc, ' '.join(results)
+    return doc, ' '.join(results), found
 
 
 def multi_find_words(df):

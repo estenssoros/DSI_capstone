@@ -3,6 +3,7 @@ from LM_Util import clear_docs_from_dict, twilio_message
 from LM_Doc_Reader import multi_convert_pdfs
 from multiprocessing import cpu_count, Pool
 from string import maketrans, punctuation
+import gc
 
 def extract_text(limit, s3_dir):
     '''
@@ -25,6 +26,7 @@ def loop_text(loops, s3_dir='ocrdocs/'):
     for i in range(loops):
         print '----------------- LOOP: {0}/{1} -----------------'.format(i + 1, loops)
         extract_text(cpu_count() * 5, s3_dir)
+        gc.collect()
     twilio_message('read {0} text docs to s3'.format(loops * cpu_count() * 12))
 
 

@@ -11,7 +11,6 @@ from math import log
 from multiprocessing import Pool, cpu_count
 import re
 from collections import Counter, defaultdict
-from textblob import TextBlob
 
 
 def get_text_df(fname):
@@ -54,11 +53,6 @@ def find_words(args, words=None, maxword=None, keywords=None):
                 options.append(test_word)
                 if test_word in keywords:
                     found.append(test_word)
-            # elif len(test_word) > 3 and key_word_loc == None and test_word[0] in [w[0] for w in keywords]:
-            #     corr = correct(test_word)
-            #     print test_word, corr
-            #     if corr in keywords:
-            #         key_word_loc = start
             end += 1
 
         if options:
@@ -68,14 +62,14 @@ def find_words(args, words=None, maxword=None, keywords=None):
         else:
             text = text[1:]
 
-    return doc, ' '.join(results), found
+    return doc, ' '.join(results), ', '.join(found)
 
 
 def multi_find_words(df):
     tuples = [tuple(x) for x in df.values]
     pool = Pool(processes=cpu_count() - 1)
     results = pool.map(find_words, tuples)
-    return pd.DataFrame(results, columns=['doc', 'text'])
+    return pd.DataFrame(results, columns=['doc', 'text','keywords'])
 
 
 def find_ngrams(input_list, n):

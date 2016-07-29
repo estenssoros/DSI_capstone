@@ -21,6 +21,24 @@ def get_text_df(fname):
     return df
 
 
+def condense(lst):
+    lst = [''.join(x.split()) for x in lst]
+    return ''.join(lst)
+
+
+def reg_key_words(key_dict):
+    results = defaultdict(list)
+
+    for k, v in key_dict.iteritems():
+        if k == 'township':
+            results[k].append(re.findall('[0-9]+n', v))
+        if k == 'section':
+            results[k].append(re.findall('[0-9]+', v))
+        if k == 'range':
+            results[k].append(re.findall('[0-9]+w', v))
+    return results
+
+
 def find_words(args, words=None, maxword=None, keywords=None):
     '''
 
@@ -37,12 +55,11 @@ def find_words(args, words=None, maxword=None, keywords=None):
     if keywords is None:
         with open('text/keywords.txt') as f:
             keywords = set(f.read().lower().split())
-            min_key = min(len(x) for x in keywords)
 
     maxword = max(max(len(x) for x in keywords), maxword)
 
     results = []
-    found=[]
+    found = []
     while len(text) > 0:
         start = 0
         end = start + 1
@@ -62,14 +79,56 @@ def find_words(args, words=None, maxword=None, keywords=None):
         else:
             text = text[1:]
 
-    return doc, ' '.join(results), ', '.join(found)
+    # find index location of key words in main text
+    lst = list(results)
+    indexes = []
+    for word in found:
+        idx = lst.index(word)
+        indexes.append(idx)
+        lst[idx] = ""
+
+    # pull folowing text of key words
+    df = pd.DataFrame(columns=['doc','township','section','range'])
+    key_dict = {}
+    for i in range(len(found) - 1):
+        key_lst = results[indexes[i] + 1:indexes[i + 1]]
+        if len(key_lst) > 10:
+            key_lst = key_lst[:10]
+        if found[i] in key_dict:
+            key_dict[found[i]].append(''.join(key_lst))
+        else:
+            key_dict[found[i]] = [''.join(key_lst)]
+
+    # for k, v in key_dict.iteritems():
+    #     key_dict[k] = [condense(x) for x in v]
+
+    # options = ['ne\d*', 'nw\d*', 'se\d*', 'sw\d*', 'n\d*', 'n\d*', 'all']
+    # quarters = []
+    # if 'section' in key_dict:
+    #     for i, section in enumerate(key_dict['section']):
+    #         section_qtr = []
+    #         for option in options:
+    #             re_find = re.findall(option, section)
+    #             if len(re_find) > 0:
+    #                 section_qtr.append(re_find)
+    #                 for x in re_find:
+    #                     section = key_dict['section'][i].replace(x, '')
+    #         key_dict['section'][i] = section
+    #
+    #         if section_qtr:
+    #             quarters.append((i, section_qtr))
+    # key_dict = reg_key_words(key_dict)
+    # if quarters:
+    
+
+    return doc, ' '.join(results), key_dict
 
 
 def multi_find_words(df):
     tuples = [tuple(x) for x in df.values]
     pool = Pool(processes=cpu_count() - 1)
     results = pool.map(find_words, tuples)
-    return pd.DataFrame(results, columns=['doc', 'text','keywords'])
+    return pd.DataFrame(results, columns=['doc', 'text', 'keywords'])
 
 
 def find_ngrams(input_list, n):
@@ -101,5 +160,8 @@ if __name__ == '__main__':
     system('clear')
     welcome()
     df = get_text_df('data/text_data_sample.csv')
-    # df = multi_find_words(df)
+    # text = df.loc[4, 'text']
+    # doc = df.loc[4, 'doc']
+    # doc, results, key_dict = find_words((doc, text))
+    df = multi_find_words(df)
     # n_grams = generate_n_grams()

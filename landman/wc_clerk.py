@@ -161,13 +161,12 @@ def text_info():
     b = connect_s3()
     for key in b.list('textdocs/'):
         if key.name.endswith('.txt'):
-            doc = key.name.replace('textdocs/','').replace('.txt','')
+            doc = key.name.replace('textdocs/', '').replace('.txt', '')
             text = key.get_contents_as_string()
             w_count = len(text.split())
             size = key.size
-            df = df.append({'doc':doc, 'w_count':w_count, 'size':size}ignore_index=True)
+            df = df.append({'doc': doc, 'w_count': w_count, 'size': size}, ignore_index=True)
     return df
 if __name__ == '__main__':
     system('clear')
     welcome()
-    

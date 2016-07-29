@@ -26,10 +26,9 @@ def loop_text(loops, s3_dir='ocrdocs/'):
     '''
     for i in range(loops):
         print '----------------- LOOP: {0}/{1} -----------------'.format(i + 1, loops)
-        gc.collect()
-        extract_text(cpu_count() * 5, s3_dir)
-        gc.collect()
-    twilio_message('read {0} text docs to s3'.format(loops * cpu_count() * 5))
+        ttl = 5
+        extract_text(cpu_count() * ttl, s3_dir)
+    twilio_message('read {0} text docs to s3'.format(loops * cpu_count() * ttl))
 
 
 def word_count_docs(key):

@@ -88,7 +88,7 @@ def find_words(args, words=None, maxword=None, keywords=None):
         lst[idx] = ""
 
     # pull folowing text of key words
-    df = pd.DataFrame(columns=['doc','township','section','range'])
+    df = pd.DataFrame(columns=['doc', 'township', 'section', 'range'])
     key_dict = {}
     for i in range(len(found) - 1):
         key_lst = results[indexes[i] + 1:indexes[i + 1]]
@@ -119,7 +119,6 @@ def find_words(args, words=None, maxword=None, keywords=None):
     #             quarters.append((i, section_qtr))
     # key_dict = reg_key_words(key_dict)
     # if quarters:
-    
 
     return doc, ' '.join(results), key_dict
 
@@ -156,12 +155,19 @@ def replace_word(word, repl):
 
     print 'done!'
 
+
+def text_info():
+    df = pd.DataFrame(columns=['doc', 'w_count', 'size'])
+    b = connect_s3()
+    for key in b.list('textdocs/'):
+        if key.name.endswith('.txt'):
+            doc = key.name.replace('textdocs/','').replace('.txt','')
+            text = key.get_contents_as_string()
+            w_count = len(text.split())
+            size = key.size
+            df = df.append({'doc':doc, 'w_count':w_count, 'size':size}ignore_index=True)
+    return df
 if __name__ == '__main__':
     system('clear')
     welcome()
-    df = get_text_df('data/text_data_sample.csv')
-    # text = df.loc[4, 'text']
-    # doc = df.loc[4, 'doc']
-    # doc, results, key_dict = find_words((doc, text))
-    df = multi_find_words(df)
-    # n_grams = generate_n_grams()
+    

@@ -3,7 +3,6 @@ import json
 import os
 import pandas as pd
 import re
-import enchant
 
 
 def read_json(fname):

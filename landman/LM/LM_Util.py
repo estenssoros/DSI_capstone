@@ -95,8 +95,6 @@ def get_words():
     max_length = max(len(word) for word in words)
     return words, max_length
 
-DICT = enchant.Dict("en_US")
-
 def enchant_text(word):
     if DICT.check(word):
         return word

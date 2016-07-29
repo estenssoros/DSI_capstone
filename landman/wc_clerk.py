@@ -36,6 +36,11 @@ def reg_key_words(key_dict):
             results[k].append(re.findall('[0-9]+', v))
         if k == 'range':
             results[k].append(re.findall('[0-9]+w', v))
+        if k == 'landincludedinlease':
+            results[k].append([v])
+        if k == 'descriptionofland':
+            results[k].append([v])
+            
     return results
 
 

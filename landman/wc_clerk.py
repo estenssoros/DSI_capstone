@@ -164,7 +164,7 @@ def read_key(key):
 
 def text_info():
     b = connect_s3()
-    keys = [key for key in b.list('textdocs/') if key.endswith('.txt')]
+    keys = [key for key in b.list('textdocs/') if key.name.endswith('.txt')]
     print 'keys read in!'
     pool = Pool(processes=cpu_count()-1)
     results = pool.map(read_key, keys)

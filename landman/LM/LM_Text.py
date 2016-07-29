@@ -1,4 +1,4 @@
-from LM_AWS import get_docs_from_s3, write_all_to_s3
+from LM_AWS import get_docs_from_s3, write_all_to_s3, connect_s3
 from LM_Util import clear_docs_from_dict, twilio_message
 from LM_Doc_Reader import multi_convert_pdfs
 from multiprocessing import cpu_count, Pool

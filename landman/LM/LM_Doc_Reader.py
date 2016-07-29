@@ -87,6 +87,9 @@ def multi_convert_pdfs(from_dir, to_dir):
     args = [(x, from_dir, to_dir) for x in files]
     args = zip(lst, args)
     pool.map(convert_pdf, args)
+    pool.close()
+    pool.join()
+
 
 if __name__ == '__main__':
     pass

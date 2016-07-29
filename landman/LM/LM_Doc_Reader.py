@@ -81,7 +81,7 @@ def ocr_docs(directory):
 
 
 def multi_convert_pdfs(from_dir, to_dir):
-    pool = Pool(processes=cpu_count() - 1, maxtasksperchild=100)
+    pool = Pool(processes=cpu_count() - 1)
     files = [x for x in os.listdir(from_dir) if x.endswith('.pdf')]
     lst = range(len(files))
     args = [(x, from_dir, to_dir) for x in files]

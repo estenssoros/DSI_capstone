@@ -3,7 +3,7 @@ from LM_Util import clear_docs_from_dict, twilio_message
 from LM_Doc_Reader import multi_convert_pdfs
 from multiprocessing import cpu_count, Pool
 from string import maketrans, punctuation
-import gc
+import pandas as pd
 
 
 def extract_text(limit, s3_dir):

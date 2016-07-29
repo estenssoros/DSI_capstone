@@ -60,7 +60,7 @@ def clean_docs(key):
     return doc, text
 
 
-def multi_word_count(func, cols):
+def multi_doc(func, cols):
     '''
     INPUT: function, list of columns
     OUTPUT: dataframe
@@ -71,5 +71,7 @@ def multi_word_count(func, cols):
     print 'beggining document analysis!'
     pool = Pool(processes=cpu_count() - 1)
     results = pool.map(func, keys)
+    pool.close()
+    pool.join()
     print 'done!'
     return pd.DataFrame(results, columns=cols)

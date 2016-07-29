@@ -1,4 +1,4 @@
-from LM.LM_Text import loop_text
+from LM.LM_Text import loop_text, clean_docs, multi_doc
 from LM.LM_OCR import loop_ocr
 from LM.LM_AWS import sync_read, write_to_s3, connect_s3, get_docs_from_s3, read_from_s3
 from LM.LM_Util import welcome, get_words
@@ -155,6 +155,7 @@ def replace_word(word, repl):
 
     print 'done!'
 
+
 def read_key(key):
     doc = key.name.replace('textdocs/', '').replace('.txt', '')
     text = key.get_contents_as_string()
@@ -162,12 +163,15 @@ def read_key(key):
     size = key.size
     return doc, w_count, size
 
+
 def text_info():
     b = connect_s3()
     keys = [key for key in b.list('textdocs/') if key.name.endswith('.txt')]
     print 'keys read in!'
-    pool = Pool(processes=cpu_count()-1)
+    pool = Pool(processes=cpu_count() - 1)
     results = pool.map(read_key, keys)
+    pool.close()
+    pool.join()
     return pd.DataFrame(results, columns=['doc', 'w_count', 'size'])
 
 if __name__ == '__main__':

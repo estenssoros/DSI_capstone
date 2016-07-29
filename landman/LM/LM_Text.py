@@ -5,6 +5,7 @@ from multiprocessing import cpu_count, Pool
 from string import maketrans, punctuation
 import gc
 
+
 def extract_text(limit, s3_dir):
     '''
     INPUT: integer
@@ -28,7 +29,7 @@ def loop_text(loops, s3_dir='ocrdocs/'):
         gc.collect()
         extract_text(cpu_count() * 5, s3_dir)
         gc.collect()
-    twilio_message('read {0} text docs to s3'.format(loops * cpu_count() * 12))
+    twilio_message('read {0} text docs to s3'.format(loops * cpu_count() * 5))
 
 
 def word_count_docs(key):

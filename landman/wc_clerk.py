@@ -159,13 +159,15 @@ def replace_word(word, repl):
 def text_info():
     df = pd.DataFrame(columns=['doc', 'w_count', 'size'])
     b = connect_s3()
-    for key in b.list('textdocs/'):
+    for i, key in enumerate(b.list('textdocs/')):
         if key.name.endswith('.txt'):
             doc = key.name.replace('textdocs/', '').replace('.txt', '')
             text = key.get_contents_as_string()
             w_count = len(text.split())
             size = key.size
             df = df.append({'doc': doc, 'w_count': w_count, 'size': size}, ignore_index=True)
+        if i % 1000==0:
+            print i
     return df
 if __name__ == '__main__':
     system('clear')

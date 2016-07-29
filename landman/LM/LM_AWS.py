@@ -103,13 +103,14 @@ def get_docs_from_s3(limit=10, s3_dir='welddocs/', ext='.pdf', df_col=None):
         df = sync_read(r=True)
         if df_col not in df.columns:
             df[df_col] = False
-        sample = df['doc'][df['converted'] == False].sample(limit)
+        sample = df['doc'][df[df_col] == False].sample(limit)
         not_read = sample.values.tolist()
-
         m = df['doc'].isin(not_read)
+
         df.loc[m, df_col] = True
         df.to_csv('data/new_read.csv', index=False)
         write_to_s3('data/new_read.csv')
+
         print '{0} documents remaining in queue'.format(len(df[df[df_col] == False]))
         print '{0:.2f}% complete'.format(len(df[df[df_col] == True]) / len(df) * 100)
         if s3_dir == 'ocrdocs/':

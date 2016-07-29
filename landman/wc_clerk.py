@@ -155,20 +155,21 @@ def replace_word(word, repl):
 
     print 'done!'
 
+def read_key(key):
+    doc = key.name.replace('textdocs/', '').replace('.txt', '')
+    text = key.get_contents_as_string()
+    w_count = len(text.split())
+    size = key.size
+    return doc, w_count, size
 
 def text_info():
-    df = pd.DataFrame(columns=['doc', 'w_count', 'size'])
     b = connect_s3()
-    for i, key in enumerate(b.list('textdocs/')):
-        if key.name.endswith('.txt'):
-            doc = key.name.replace('textdocs/', '').replace('.txt', '')
-            text = key.get_contents_as_string()
-            w_count = len(text.split())
-            size = key.size
-            df = df.append({'doc': doc, 'w_count': w_count, 'size': size}, ignore_index=True)
-        if i % 1000==0:
-            print i
-    return df
+    keys = [key for key in b.list('textdocs/') if key.endswith('.txt')]
+    print 'keys read in!'
+    pool = Pool(processes=cpu_count()-1)
+    results = pool.map(read_key, keys)
+    return pd.DataFrame(results, columns=['doc', 'w_count', 'size'])
+
 if __name__ == '__main__':
     system('clear')
     welcome()

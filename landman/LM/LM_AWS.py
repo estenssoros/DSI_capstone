@@ -103,7 +103,11 @@ def get_docs_from_s3(limit=10, s3_dir='welddocs/', ext='.pdf', df_col=None):
         df = sync_read(r=True)
         if df_col not in df.columns:
             df[df_col] = False
-        sample = df['doc'][df[df_col] == False].sample(limit)
+        try:
+            sample = df['doc'][df[df_col] == False].sample(limit)
+        except:
+            sample = df['doc'][df[df_col] == False]
+            
         not_read = sample.values.tolist()
         m = df['doc'].isin(not_read)
 

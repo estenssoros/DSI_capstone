@@ -111,7 +111,7 @@ def get_docs_from_s3(limit=10, s3_dir='welddocs/', ext='.pdf', df_col=None):
         df.to_csv('data/new_read.csv', index=False)
         write_to_s3('data/new_read.csv')
         print '{0} documents remaining in queue'.format(len(df[df[df_col] == False]))
-        print '{0:.2f}% complete'.format(len(df[df[df_col] == False]) / len(df) * 100)
+        print '{0:.2f}% complete'.format(len(df[df[df_col] == True]) / len(df) * 100)
         if s3_dir == 'ocrdocs/':
             not_read = [x + '_ocr' for x in not_read]
 

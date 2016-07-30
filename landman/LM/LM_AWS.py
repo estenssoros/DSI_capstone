@@ -99,15 +99,15 @@ def get_docs_from_s3(limit=10, s3_dir='welddocs/', ext='.pdf', df_col=None):
     from s3 bucke file.
     '''
     b = connect_s3()
+    df = sync_read(r=True)
     if df_col:
-        df = sync_read(r=True)
         if df_col not in df.columns:
             df[df_col] = False
         try:
             sample = df['doc'][df[df_col] == False].sample(limit)
         except:
             sample = df['doc'][df[df_col] == False]
-            
+
         not_read = sample.values.tolist()
         m = df['doc'].isin(not_read)
 
@@ -128,8 +128,33 @@ def get_docs_from_s3(limit=10, s3_dir='welddocs/', ext='.pdf', df_col=None):
             except Exception as e:
                 print e
     else:
-        for i, key in enumerate(b.list(s3_dir)):
-            if key.name.endswith(ext):
-                key.get_contents_to_filename(key.name)
-                if i == limit:
-                    break
+        sample = df['doc'].sample(limit).values.tolist()
+        if s3_dir == 'ocrdocs/':
+            sample = [x + '_ocr' for x in not_read]
+
+        for doc in sample:
+            fname = ''.join([s3_dir, doc, ext])
+            try:
+                key = b.new_key(fname)
+                key.get_contents_to_filename(fname)
+            except Exception as e:
+                print e
+
+
+def read_key(key):
+    doc = key.name.replace('textdocs/', '').replace('.txt', '')
+    text = key.get_contents_as_string()
+    w_count = len(text.split())
+    size = key.size
+    return doc, w_count, size
+
+
+def text_info():
+    b = connect_s3()
+    keys = [key for key in b.list('textdocs/') if key.name.endswith('.txt')]
+    print 'keys read in!'
+    pool = Pool(processes=cpu_count() - 1)
+    results = pool.map(read_key, keys)
+    pool.close()
+    pool.join()
+    return pd.DataFrame(results, columns=['doc', 'w_count', 'size'])

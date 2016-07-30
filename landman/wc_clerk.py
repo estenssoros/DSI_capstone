@@ -1,8 +1,10 @@
+from __future__ import division
 from LM.LM_Text import loop_text, clean_docs, multi_doc
 from LM.LM_OCR import loop_ocr
 from LM.LM_AWS import sync_read, write_to_s3, connect_s3, get_docs_from_s3, read_from_s3
 from LM.LM_Util import welcome, get_words
 from LM.LM_SpellCheck import correct
+from LM.LM_Plot import plot_hist
 from os import system
 import pandas as pd
 import time
@@ -11,6 +13,11 @@ from math import log
 from multiprocessing import Pool, cpu_count
 import re
 from collections import Counter, defaultdict
+from Levenshtein import distance
+from string import maketrans, punctuation
+import os
+import json
+import matplotlib.pyplot as plt
 
 
 def get_text_df(fname):
@@ -21,164 +28,70 @@ def get_text_df(fname):
     return df
 
 
-def condense(lst):
-    lst = [''.join(x.split()) for x in lst]
-    return ''.join(lst)
-
-
-def reg_key_words(key_dict):
-    results = defaultdict(list)
-
-    for k, v in key_dict.iteritems():
-        if k == 'township':
-            results[k].append(re.findall('[0-9]+n', v))
-        if k == 'section':
-            results[k].append(re.findall('[0-9]+', v))
-        if k == 'range':
-            results[k].append(re.findall('[0-9]+w', v))
-        if k == 'landincludedinlease':
-            results[k].append([v])
-        if k == 'descriptionofland':
-            results[k].append([v])
-            
-    return results
-
-
-def find_words(args, words=None, maxword=None, keywords=None):
-    '''
-
-    '''
-    doc, text = args
-
-    if words is None:
-        with open('text/words_by_frequency.txt') as f:
-            words = set(f.read().lower().split())
-
-    if maxword is None:
-        maxword = max(len(x) for x in words)
-
-    if keywords is None:
-        with open('text/keywords.txt') as f:
-            keywords = set(f.read().lower().split())
-
-    maxword = max(max(len(x) for x in keywords), maxword)
-
-    results = []
-    found = []
+def make_trie(text, window=7):
+    start = 0
+    end = start + window
+    tries = []
     while len(text) > 0:
-        start = 0
-        end = start + 1
-        options = []
-        for i in range(maxword):
-            test_word = text[start:end]
-            if test_word in words:
-                options.append(test_word)
-                if test_word in keywords:
-                    found.append(test_word)
-            end += 1
+        tries.append(text[start:end])
+        text = text[1:]
 
-        if options:
-            option = max(options, key=lambda x: len(x))
-            text = text[len(option):]
-            results.append(option)
-        else:
-            text = text[1:]
-
-    # find index location of key words in main text
-    lst = list(results)
-    indexes = []
-    for word in found:
-        idx = lst.index(word)
-        indexes.append(idx)
-        lst[idx] = ""
-
-    # pull folowing text of key words
-    df = pd.DataFrame(columns=['doc', 'township', 'section', 'range'])
-    key_dict = {}
-    for i in range(len(found) - 1):
-        key_lst = results[indexes[i] + 1:indexes[i + 1]]
-        if len(key_lst) > 10:
-            key_lst = key_lst[:10]
-        if found[i] in key_dict:
-            key_dict[found[i]].append(''.join(key_lst))
-        else:
-            key_dict[found[i]] = [''.join(key_lst)]
-
-    # for k, v in key_dict.iteritems():
-    #     key_dict[k] = [condense(x) for x in v]
-
-    # options = ['ne\d*', 'nw\d*', 'se\d*', 'sw\d*', 'n\d*', 'n\d*', 'all']
-    # quarters = []
-    # if 'section' in key_dict:
-    #     for i, section in enumerate(key_dict['section']):
-    #         section_qtr = []
-    #         for option in options:
-    #             re_find = re.findall(option, section)
-    #             if len(re_find) > 0:
-    #                 section_qtr.append(re_find)
-    #                 for x in re_find:
-    #                     section = key_dict['section'][i].replace(x, '')
-    #         key_dict['section'][i] = section
-    #
-    #         if section_qtr:
-    #             quarters.append((i, section_qtr))
-    # key_dict = reg_key_words(key_dict)
-    # if quarters:
-
-    return doc, ' '.join(results), key_dict
+    _end = '_end_'
+    root = dict()
+    for trie in tries:
+        current_dict = root
+        for letter in trie:
+            current_dict = current_dict.setdefault(letter, {})
+        current_dict[_end] = _end
+    return root
 
 
-def multi_find_words(df):
-    tuples = [tuple(x) for x in df.values]
-    pool = Pool(processes=cpu_count() - 1)
-    results = pool.map(find_words, tuples)
-    return pd.DataFrame(results, columns=['doc', 'text', 'keywords'])
-
-
-def find_ngrams(input_list, n):
-    return zip(*[input_list[i:] for i in range(n)])
-
-
-def generate_n_grams():
-    with open('words_by_frequency.txt') as f:
-        text = f.read().split()
-    n_grams = []
-    for i in range(2, 6):
-        print i
-        n_grams.extend(find_ngrams(text, i))
-    return Counter(n_grams)
-
-
-def replace_word(word, repl):
-    with open('words_by_frequency.txt') as f:
+def read_text(fname):
+    with open(fname) as f:
         text = f.read()
+    text = text.lower()
 
-    text = text.replace(word, repl)
+    spaces = ' ' * len(punctuation)
+    table = maketrans(punctuation, spaces)
+    text = text.translate(table)
 
-    with open('words_by_frequency.txt', 'w') as f:
-        f.write(text)
-
-    print 'done!'
-
-
-def read_key(key):
-    doc = key.name.replace('textdocs/', '').replace('.txt', '')
-    text = key.get_contents_as_string()
-    w_count = len(text.split())
-    size = key.size
-    return doc, w_count, size
+    text = re.sub('[^A-Za-z 0-9]+', ' ', text)
+    text = ' '.join(text.split())
+    return text
 
 
-def text_info():
-    b = connect_s3()
-    keys = [key for key in b.list('textdocs/') if key.name.endswith('.txt')]
-    print 'keys read in!'
-    pool = Pool(processes=cpu_count() - 1)
-    results = pool.map(read_key, keys)
-    pool.close()
-    pool.join()
-    return pd.DataFrame(results, columns=['doc', 'w_count', 'size'])
+def score_word(word, trie):
+    if len(word) == 0:
+        return 0
+    print word
+    letter = word[0]
+    if letter in trie:
+        return  1 + score_word(word[1:], trie[letter])
+    else:
+        return 0
+
 
 if __name__ == '__main__':
     system('clear')
-    welcome()
+    # welcome()
+    # df = get_text_df('data/text_data_sample.csv')
+    # text = df.loc[0, 'text']
+    # df['char_tries'] = df.apply(lambda x: character_trie(7, x['text']), axis=1)
+    # df['b_char_tries'] = df.apply(lambda x: character_trie(7, x['text'][::-1]), axis=1)
+    # docs = [f for f in os.listdir('textdocs/') if f.endswith('.txt')]
+    # for doc in docs:
+    #     correct = read_text('train_text/{}'.format(doc))
+    #     bad = read_text('textdocs/{}'.format(doc))
+    #     n = len(correct)
+    #     E = distance(correct, bad)
+    #     print '{0} character accuracy: {1:.2f}%'.format(doc, (n - E) / n)
+    # for doc in docs:
+    #     text = read_text('train_text/{}'.format(doc))
+    #     trie = make_trie(text)
+    #     with open('tries/{0}_ls.json'.format(doc.replace('.txt', '')), 'w') as f:
+    #         json.dump(trie, f)
+    #     trie = make_trie(text[::-1])
+    #     with open('tries/{0}_lp.json'.format(doc.replace('.txt', '')), 'w') as f:
+    #         json.dump(trie, f)
+    with open('tries/DOC100S1082_0_ls.json') as f:
+        trie = json.load(f)

@@ -8,13 +8,11 @@ import time
 from multiprocessing import Pool, cpu_count
 import re
 from collections import Counter, defaultdict
-from Levenshtein import distance
 from string import maketrans, punctuation
 import os
 import json
 import numpy as np
 import itertools
-from fuzzywuzzy import process
 
 
 def get_text_df(fname):

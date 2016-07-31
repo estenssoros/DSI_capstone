@@ -111,7 +111,6 @@ def reg_key_words(key_dict):
 
     return results
 
-
 def find_words(args, words=None, maxword=None, keywords=None):
     '''
 
@@ -201,17 +200,3 @@ def multi_find_words(df):
     pool = Pool(processes=cpu_count() - 1)
     results = pool.map(find_words, tuples)
     return pd.DataFrame(results, columns=['doc', 'text', 'keywords'])
-
-
-def find_ngrams(input_list, n):
-    return zip(*[input_list[i:] for i in range(n)])
-
-
-def generate_n_grams():
-    with open('words_by_frequency.txt') as f:
-        text = f.read().split()
-    n_grams = []
-    for i in range(2, 6):
-        print i
-        n_grams.extend(find_ngrams(text, i))
-    return Counter(n_grams)

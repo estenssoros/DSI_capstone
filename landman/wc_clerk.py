@@ -151,5 +151,5 @@ def multi_find_words(df):
 
 if __name__ == '__main__':
     os.system('clear')
-    df = get_text_df('data/text_data_sample.csv')
+    df = get_text_df('data/text_data.csv')
     df = multi_find_words(df)

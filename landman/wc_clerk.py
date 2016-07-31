@@ -13,6 +13,8 @@ from string import maketrans, punctuation
 import os
 import json
 import numpy as np
+import itertools
+from fuzzywuzzy import process
 
 
 def get_text_df(fname):
@@ -33,10 +35,10 @@ def read_text(fname):
     # text = text.translate(table)
     punc = set('.,?!')
     for p in punc:
-        text = text.replace(p,'')
+        text = text.replace(p, '')
     punc = set([punctuation])
     for p in punc:
-        text = text.replace(p,' ')
+        text = text.replace(p, ' ')
     text = re.sub('[^a-z 0-9]+', ' ', text)
     text = ' '.join(text.split())
     return text
@@ -48,25 +50,16 @@ def find_ngrams(input_list, n):
 
 def gen_ngrams(text):
     text = text.split()
-    n_grams = []
-    for i in range(2, 6):
-        n_grams.extend(find_ngrams(text, i))
+    # n_grams = []
+    # for i in range(2, 6):
+    # n_grams.extend(find_ngrams(text, i))
+    n_grams = find_ngrams(text, 3)
     return Counter(n_grams)
 
-def text_windows(text, window):
-    start = 0
-    end = start + window
-    tries = []
-    while end <= len(text):
-        tries.append(text[start:end])
-        start += 1
-        end += 1
-    return tries
 
-
-def make_trie(text, window=7):
-    tries = text_windows(text, window)
-    # tries = text.split()
+def make_trie(text):
+    # tries = text_windows(text, window)
+    tries = text.split()
     _end = '_end_'
     root = dict()
     for trie in tries:
@@ -76,28 +69,56 @@ def make_trie(text, window=7):
         current_dict[_end] = _end
     return root
 
-def in_trie(segment, trie):
+
+def weight_node(trie):
+    weight = 0
+    for k, v in trie.iteritems():
+        if k == '_end_':
+            return 1
+        else:
+            weight += weight_node(trie[k])
+    return weight
+
+
+def entropy(trie):
+    n_weight = weight_node(trie)
+    return sum([weight_node(n) / n_weight * np.log(weight_node(n)) / n_weight for c, n in trie.iteritems()])
+
+
+def word_entropy(segment, trie):
     if len(segment) == 0:
-        return True
+        return entropy(trie)
+
     letter = segment[0]
     if letter in trie:
-        return in_trie(segment[1:], trie[letter])
+        return word_entropy(segment[1:], trie[letter])
     else:
-        return False
-        
-def find_words(args, vocab=None, maxword=None):  # , keywords=None):
-    '''
-    '''
-    doc, text = args
+        print segment
+        return entropy(trie)
 
+
+def word_lsv(segment, trie):
+    if len(segment) == 0:
+        return len(trie)
+    letter = segment[0]
+    if letter in trie:
+        return word_lsv(segment[1:], trie[letter])
+    else:
+        return len(trie)
+
+
+def find_words(arg, vocab=None, maxword=None):  # , keywords=None):
+    doc, text = arg
     if vocab is None:
         words = []
         d = 'train_text/'
         docs = [d + f for f in os.listdir(d) if f.endswith('.txt')]
         for doc in docs:
-            vocab.append(read_text(doc))
-        vocab = ' '.join(vocab)
-        vocab = set(vocab.split())
+            words.append(read_text(doc))
+        words = ' '.join(words)
+        vocab = list(set(words.split()))
+        trie = make_trie(words)
+
     if maxword is None:
         maxword = max(len(x) for x in vocab)
 
@@ -109,34 +130,28 @@ def find_words(args, vocab=None, maxword=None):  # , keywords=None):
         for i in range(maxword):
             test_word = text[start:end]
             if test_word in vocab:
-                if len(missed)>0:
-                    word_arr.append(''.join(missed))
-                    missed = []
                 options.append(test_word)
             end += 1
 
         if options:
             option = max(options, key=lambda x: len(x))
             text = text[len(option):]
-            word_arr.append(options)
+            word_arr.append(option)
         else:
-            missed.append(text[0])
             text = text[1:]
 
+    return doc, ' '.join(word_arr)
 
-    return word_arr
+
+def multi_find_words(df):
+    tuples = [tuple(x) for x in df.values]
+    pool = Pool(processes=cpu_count() - 1)
+    results = pool.map(find_words, tuples)
+    pool.close()
+    pool.join()
+    return pd.DataFrame(results, columns=['doc', 'text'])
+
 if __name__ == '__main__':
     os.system('clear')
-    # welcome()
     df = get_text_df('data/text_data_sample.csv')
-    text = df.loc[0, 'text']
-    doc = df.loc[0, 'doc']
-    # df['char_tries'] = df.apply(lambda x: character_trie(7, x['text']), axis=1)
-    # df['b_char_tries'] = df.apply(lambda x: character_trie(7, x['text'][::-1]), axis=1)
-    d = 'train_text/'
-    docs = [d + f for f in os.listdir(d) if f.endswith('.txt')]
-    all_grams = Counter()
-    # for doc in docs:
-    #     text = read_text(doc)
-    #     all_grams.update(gen_ngrams(text))
-    word_arr = find_words((doc, text))
+    df = multi_find_words(df)

@@ -96,3 +96,47 @@ if __name__ == '__main__':
 
     with open('tries/DOC100S1082_0_b.json') as f:
         b_trie = json.load(f)
+
+
+
+
+# final = []
+# i = 0
+# found_arr = [w[1] for w in word_arr]
+# word_arr = [w[0] for w in word_arr]
+# while i <= len(word_arr):
+#     if found_arr[i] == False:
+#         b = i - 1
+#         while b > 0:
+#             if len(word_arr[b]) > 3:
+#                 b += 1
+#                 break
+#             else:
+#                 b -= 1
+#
+#         f = i + 1
+#         while f < len(word_arr):
+#             if len(word_arr[f]) > 3:
+#                 break
+#             else:
+#                 f += 1
+#         print word_arr[b - 3:f + 3]
+#         print ''.join(word_arr[b:f])
+#         distances = [distance(''.join(word_arr[b:f]), word) for word in vocab]
+#         print vocab[np.argmin(distances)]
+#         time.sleep(3)
+#     i += 1
+# all_grams = Counter()
+# for doc in docs:
+#     text = read_text(doc)
+#     all_grams.update(gen_ngrams(text))
+#
+# # correct word_array
+# idx = 0
+# while idx < len(word_arr) - 3:
+#     test_arr = word_arr[idx:idx+3]
+#     print test_arr
+#     permute_test = list(itertools.product(*test_arr))
+#     print permute_test
+#     calcs = [calc_thresh(s) for s in permute_test]
+#     idx += 3

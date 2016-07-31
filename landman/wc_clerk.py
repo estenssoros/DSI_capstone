@@ -161,9 +161,9 @@ def find_legal_description(arg):
 
 if __name__ == '__main__':
     os.system('clear')
-    df = get_text_df('data/text_data_sample.csv')
+    df = get_text_df('data/text_data.csv')
     df = multi_find_words(df)
-    df = pd.read_pickle('data/corrected_text.pickle')
+    # df = pd.read_pickle('data/corrected_text.pickle')
     # df['found']=False
     #
     # key_words=[]

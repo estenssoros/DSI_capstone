@@ -106,7 +106,7 @@ def word_lsv(segment, trie):
 
 
 def find_words(arg, vocab=None, maxword=None):  # , keywords=None):
-    doc, text = arg
+    doc_num, text = arg
     if vocab is None:
         words = []
         d = 'traintext/'
@@ -138,7 +138,7 @@ def find_words(arg, vocab=None, maxword=None):  # , keywords=None):
         else:
             text = text[1:]
 
-    return doc, ' '.join(word_arr)
+    return doc_num, ' '.join(word_arr)
 
 
 def multi_find_words(df):
@@ -149,22 +149,35 @@ def multi_find_words(df):
     pool.join()
     return pd.DataFrame(results, columns=['doc', 'text'])
 
+def find_legal_description(arg):
+    doc, text = arg
+    with open('text/keywords.txt') as f:
+        key_words=[line.replace('\n','') for line in f]
+    indexes=[]
+    for key in key_words:
+        indexes.extend([m.start() for m in re.finditer(key,text)])
+
+    return doc, text[min(indexes):max(indexes)+50]
+
 if __name__ == '__main__':
     os.system('clear')
-    # df = get_text_df('data/text_data.csv')
-    # df = multi_find_words(df)
+    df = get_text_df('data/text_data_sample.csv')
+    df = multi_find_words(df)
     df = pd.read_pickle('data/corrected_text.pickle')
-    df['found']=False
-
-    key_words=[]
-    with open('text/keywords.txt') as f:
-        for line in f:
-            key_words.append(line.replace('\n',''))
-    # find key words
-    for key in key_words:
-        df[key] = df['text'].str.contains(key)
-    # find lease terms
-    with open('years.json') as f:
-        years = json.load(f)
-    for year in years['years']:
-        df[year] = df['text'].str.contains('{0} years'.format(year))
+    # df['found']=False
+    #
+    # key_words=[]
+    # with open('text/keywords.txt') as f:
+    #     for line in f:
+    #         key_words.append(line.replace('\n',''))
+    # # find key words
+    # for key in key_words:
+    #     df[key] = df['text'].str.contains(key)
+    # # find lease terms
+    # with open('years.json') as f:
+    #     years = json.load(f)
+    # for year in years['years']:
+    #     df[year] = df['text'].str.contains('{0} years'.format(year))
+    # text = df.loc[0,'text']
+    # doc = df.loc[0,'doc']
+    # print find_legal_description((doc,text))

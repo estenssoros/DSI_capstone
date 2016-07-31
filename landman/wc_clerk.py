@@ -109,7 +109,7 @@ def find_words(arg, vocab=None, maxword=None):  # , keywords=None):
     doc, text = arg
     if vocab is None:
         words = []
-        d = 'train_text/'
+        d = 'traintext/'
         docs = [d + f for f in os.listdir(d) if f.endswith('.txt')]
         for doc in docs:
             words.append(read_text(doc))

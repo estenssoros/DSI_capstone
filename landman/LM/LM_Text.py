@@ -193,10 +193,3 @@ def find_words(args, words=None, maxword=None, keywords=None):
     # if quarters:
 
     return doc, ' '.join(results), key_dict
-
-
-def multi_find_words(df):
-    tuples = [tuple(x) for x in df.values]
-    pool = Pool(processes=cpu_count() - 1)
-    results = pool.map(find_words, tuples)
-    return pd.DataFrame(results, columns=['doc', 'text', 'keywords'])

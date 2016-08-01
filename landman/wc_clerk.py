@@ -188,7 +188,7 @@ def parse_legal_descr(arg):
     for i, sec in enumerate(qtrs):
         r = re.findall('sect\w+ [\d]+', sec)
         sections.append(''.join(r))
-        qtrs[i] = qtrs[i].replace(r[0], '')
+        #qtrs[i] = qtrs[i].replace(r[0], '')
         text = text.replace(sec, '')
 
     # range
@@ -200,24 +200,24 @@ def parse_legal_descr(arg):
     ranges = [re.findall('\d+', ''.join(r.split())) for r in ranges]
 
     # quarters
-    quarters = []
-    expressions = ['n\d', 's\d', '[n|s][e|w]\d*']
-    for qtr in qtrs:
-        quarters.append([''.join(re.findall(exp, qtr)) for exp in expressions])
-    print qtrs
-    return doc, towns, sections, ranges, quarters
+    # quarters = []
+    # expressions = ['n\d', 's\d', '[n|s][e|w]\d*']
+    # for qtr in qtrs:
+    #     quarters.append([''.join(re.findall(exp, qtr)) for exp in expressions])
+    # print qtrs
+    return doc, towns, sections, ranges#, quarters
 
 
 def apply_funcs(df):
-    new_df = multi_func(df[['doc', 'text']], find_legal_description, ['doc', 'legal_text'])
+    new_df = multi_func(df[['doc', 'clean_text']], find_legal_description, ['doc', 'legal_text'])
     print 'legal description'
     df = pd.merge(df, new_df, how='left', on='doc')
 
-    new_df = multi_func(df[['doc', 'text']], find_years, ['doc', 'years'])
+    new_df = multi_func(df[['doc', 'clean_text']], find_years, ['doc', 'years'])
     print 'lease years'
     df = pd.merge(df, new_df, how='left', on='doc')
 
-    new_df = multi_func(df[['doc', 'legal_text']], parse_legal_descr, ['doc', 'town', 'sec', 'range', 'quarters'])
+    new_df = multi_func(df[['doc', 'legal_text']], parse_legal_descr, ['doc', 'town', 'sec', 'range'])
     print 'legal description'
     df = pd.merge(df, new_df, how='left', on='doc')
     return df
@@ -225,8 +225,8 @@ def apply_funcs(df):
 
 if __name__ == '__main__':
     os.system('clear')
-    # df = get_text_df('data/text_data_sample.csv')
-    # df = multi_func(df, find_words, ['doc', 'text'])
-    # df.to_pickle('data/corrected_text.pickle')
-        # df = pd.read_pickle(
+    df = get_text_df('data/text_data.csv')
+    df = multi_func(df, find_words, ['doc', 'clean_text'])
+    df.to_pickle('data/corrected_text.pickle')
+    df = apply_funcs(df)
     # df.to_pickle('data/all_data.pickle')

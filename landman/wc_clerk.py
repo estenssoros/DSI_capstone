@@ -13,6 +13,7 @@ import os
 import json
 import numpy as np
 import itertools
+from sklearn.cross_validation import train_test_split
 
 
 def get_text_df(fname):
@@ -28,15 +29,9 @@ def read_text(fname):
         text = f.read()
     text = text.lower()
 
-    # spaces = '.' * len(punctuation)
-    # table = maketrans(punctuation, spaces)
-    # text = text.translate(table)
-    punc = set('.,?!')
-    for p in punc:
-        text = text.replace(p, '')
-    punc = set([punctuation])
-    for p in punc:
-        text = text.replace(p, ' ')
+    spaces = ' ' * len(punctuation)
+    table = maketrans(punctuation, spaces)
+    text = text.translate(table)
     text = re.sub('[^a-z 0-9]+', ' ', text)
     text = ' '.join(text.split())
     return text
@@ -48,15 +43,11 @@ def find_ngrams(input_list, n):
 
 def gen_ngrams(text):
     text = text.split()
-    # n_grams = []
-    # for i in range(2, 6):
-    # n_grams.extend(find_ngrams(text, i))
     n_grams = find_ngrams(text, 3)
     return Counter(n_grams)
 
 
 def make_trie(text):
-    # tries = text_windows(text, window)
     tries = text.split()
     _end = '_end_'
     root = dict()
@@ -91,7 +82,6 @@ def word_entropy(segment, trie):
     if letter in trie:
         return word_entropy(segment[1:], trie[letter])
     else:
-        print segment
         return entropy(trie)
 
 
@@ -120,7 +110,7 @@ def find_words(arg, vocab=None, maxword=None):  # , keywords=None):
     if maxword is None:
         maxword = max(len(x) for x in vocab)
 
-    word_arr, found, missed = [], [], []
+    word_arr = []
     while len(text) > 0:
         start = 0
         end = start + 1
@@ -141,43 +131,102 @@ def find_words(arg, vocab=None, maxword=None):  # , keywords=None):
     return doc_num, ' '.join(word_arr)
 
 
-def multi_find_words(df):
-    tuples = [tuple(x) for x in df.values]
-    pool = Pool(processes=cpu_count() - 1)
-    results = pool.map(find_words, tuples)
-    pool.close()
-    pool.join()
-    return pd.DataFrame(results, columns=['doc', 'text'])
-
 def find_legal_description(arg):
     doc, text = arg
     with open('text/keywords.txt') as f:
-        key_words=[line.replace('\n','') for line in f]
-    indexes=[]
+        key_words = [line.replace('\n', '') for line in f]
+    indexes = []
     for key in key_words:
-        indexes.extend([m.start() for m in re.finditer(key,text)])
+        indexes.extend([m.start() for m in re.finditer(key, text)])
+    try:
+        if 'towns' in text:
+            text = text[min(indexes):min(indexes) + 150]
+        else:
+            text = text[min(indexes) - 40:min(indexes) + 150]
+    except:
+        text = ''
+    return doc, text
 
-    return doc, text[min(indexes):max(indexes)+50]
+
+def find_years(arg):
+    doc, text = arg
+    with open('years.json') as f:
+        years = json.load(f)['years']
+    indexes = []
+    for year in years:
+        indexes.extend([m.start() for m in re.finditer(year + ' year', text)])
+    year_text = ' '.join([text[idx:idx + 15] for idx in indexes])
+    return doc, year_text
+
+
+def multi_func(df, func, columns):
+    tuples = [tuple(x) for x in df.values]
+    pool = Pool(processes=cpu_count() - 1)
+    results = pool.map(func, tuples)
+    pool.close()
+    pool.join()
+    return pd.DataFrame(results, columns=columns)
+
+
+def parse_legal_descr(arg):
+    doc, text = arg
+
+    # township
+    towns = re.findall('town\w+ [\d ]+|town\\w+ [\d]+', text)
+    for t in towns:
+        text = text.replace(t, '')
+    text = text.strip()
+    if text.startswith('north'):
+        text = text[5:].strip()
+
+    # section
+    secs = [m.start() for m in re.finditer('sect\w+ [\d]+', text)]
+    secs.append(len(text))
+    qtrs = [text[secs[i]:secs[i + 1]] for i in range(len(secs) - 1)]
+
+    sections = []
+    for i, sec in enumerate(qtrs):
+        r = re.findall('sect\w+ [\d]+', sec)
+        sections.append(''.join(r))
+        qtrs[i] = qtrs[i].replace(r[0], '')
+        text = text.replace(sec, '')
+
+    # range
+    text = ''.join(text.split())
+    ranges = re.findall('\d+w', text)
+
+    towns = [re.findall('\d+', ''.join(t.split())) for t in towns]
+    sections = [re.findall('\d+', ''.join(s.split())) for s in sections]
+    ranges = [re.findall('\d+', ''.join(r.split())) for r in ranges]
+
+    # quarters
+    quarters = []
+    expressions = ['n\d', 's\d', '[n|s][e|w]\d*']
+    for qtr in qtrs:
+        quarters.append([''.join(re.findall(exp, qtr)) for exp in expressions])
+    print qtrs
+    return doc, towns, sections, ranges, quarters
+
+
+def apply_funcs(df):
+    new_df = multi_func(df[['doc', 'text']], find_legal_description, ['doc', 'legal_text'])
+    print 'legal description'
+    df = pd.merge(df, new_df, how='left', on='doc')
+
+    new_df = multi_func(df[['doc', 'text']], find_years, ['doc', 'years'])
+    print 'lease years'
+    df = pd.merge(df, new_df, how='left', on='doc')
+
+    new_df = multi_func(df[['doc', 'legal_text']], parse_legal_descr, ['doc', 'town', 'sec', 'range', 'quarters'])
+    print 'legal description'
+    df = pd.merge(df, new_df, how='left', on='doc')
+    return df
+
 
 if __name__ == '__main__':
     os.system('clear')
-    df = get_text_df('data/text_data.csv')
-    df = multi_find_words(df)
-    # df = pd.read_pickle('data/corrected_text.pickle')
-    # df['found']=False
-    #
-    # key_words=[]
-    # with open('text/keywords.txt') as f:
-    #     for line in f:
-    #         key_words.append(line.replace('\n',''))
-    # # find key words
-    # for key in key_words:
-    #     df[key] = df['text'].str.contains(key)
-    # # find lease terms
-    # with open('years.json') as f:
-    #     years = json.load(f)
-    # for year in years['years']:
-    #     df[year] = df['text'].str.contains('{0} years'.format(year))
-    # text = df.loc[0,'text']
-    # doc = df.loc[0,'doc']
-    # print find_legal_description((doc,text))
+    # df = get_text_df('data/text_data_sample.csv')
+    # df = multi_func(df, find_words, ['doc', 'text'])
+    # df.to_pickle('data/corrected_text.pickle')
+        # df = pd.read_pickle(
+    # df.to_pickle('data/all_data.pickle')

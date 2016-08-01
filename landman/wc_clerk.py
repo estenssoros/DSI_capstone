@@ -172,40 +172,35 @@ def parse_legal_descr(arg):
     doc, text = arg
 
     # township
-    towns = re.findall('town\w+ [\d ]+|town\\w+ [\d]+', text)
+    towns = re.findall('town\w+ [\d ]+|town\w+ [\d]+|[\d]+ north|[\d ]+ north', text)
     for t in towns:
         text = text.replace(t, '')
     text = text.strip()
     if text.startswith('north'):
         text = text[5:].strip()
 
-    # section
-    secs = [m.start() for m in re.finditer('sect\w+ [\d]+', text)]
-    secs.append(len(text))
-    qtrs = [text[secs[i]:secs[i + 1]] for i in range(len(secs) - 1)]
+    range_text = ''.join(text.split())
+    ranges = re.findall('ran\w+ [\d ]+|ran\w+ [\d]+', range_text)
+    for r in ranges:
+        text = text.replace(r, '')
+    text = text.strip()
 
-    sections = []
-    for i, sec in enumerate(qtrs):
-        r = re.findall('sect\w+ [\d]+', sec)
-        sections.append(''.join(r))
-        #qtrs[i] = qtrs[i].replace(r[0], '')
-        text = text.replace(sec, '')
+    # section
+    secs = re.findall('sec\w+ [\d ]+|sec\w+ [\d]+', text)
+
+    for s in secs:
+        text = text.replace(s, '')
+    text = text.strip()
 
     # range
     text = ''.join(text.split())
-    ranges = re.findall('\d+w', text)
+    ranges.extend(re.findall('\d+w', text))
 
     towns = [re.findall('\d+', ''.join(t.split())) for t in towns]
-    sections = [re.findall('\d+', ''.join(s.split())) for s in sections]
+    secs = [re.findall('\d+', ''.join(s.split())) for s in secs]
     ranges = [re.findall('\d+', ''.join(r.split())) for r in ranges]
 
-    # quarters
-    # quarters = []
-    # expressions = ['n\d', 's\d', '[n|s][e|w]\d*']
-    # for qtr in qtrs:
-    #     quarters.append([''.join(re.findall(exp, qtr)) for exp in expressions])
-    # print qtrs
-    return doc, towns, sections, ranges#, quarters
+    return doc, towns, ranges, secs  # , quarters
 
 
 def apply_funcs(df):
@@ -217,7 +212,7 @@ def apply_funcs(df):
     print 'lease years'
     df = pd.merge(df, new_df, how='left', on='doc')
 
-    new_df = multi_func(df[['doc', 'legal_text']], parse_legal_descr, ['doc', 'town', 'sec', 'range'])
+    new_df = multi_func(df[['doc', 'legal_text']], parse_legal_descr, ['doc', 'town', 'range', 'section'])
     print 'legal description'
     df = pd.merge(df, new_df, how='left', on='doc')
     return df
@@ -229,4 +224,4 @@ if __name__ == '__main__':
     df = multi_func(df, find_words, ['doc', 'clean_text'])
     df.to_pickle('data/corrected_text.pickle')
     df = apply_funcs(df)
-    # df.to_pickle('data/all_data.pickle')
+    # # # # df.to_pickle('data/all_data.pickle')

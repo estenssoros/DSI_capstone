@@ -20,11 +20,8 @@ def get_text_df(fname):
     return df
 
 
-def read_text(fname):
-    base = os.path.basename(fname)
-    doc = os.path.splitext(base)[0]
-    start ='---{0}---'.format(doc)
-    end='---{0}---'.format(doc)
+def read_text(fname, doc=False):
+
     with open(fname) as f:
         text = f.read()
     text = text.lower()
@@ -36,8 +33,13 @@ def read_text(fname):
     text = ' '.join(text.split())
     ind = text.find('oil')
     text = text[ind:]
-
-    return start+text+end
+    if doc:
+        base = os.path.basename(fname)
+        doc = os.path.splitext(base)[0]
+        start = '---{0}---'.format(doc)
+        end = '---{0}---'.format(doc)
+        return start + text + end
+    return text
 
 
 def find_legal_description(arg):
@@ -142,12 +144,13 @@ if __name__ == '__main__':
 
     d = 'textdocs/'
     docs = [d + f for f in os.listdir(d) if f.endswith('.txt')]
-    text = ' '.join([read_text(d) for d in docs])
+    text = ' '.join([read_text(d, doc=True) for d in docs])
 
     d = 'traintext/'
     docs = [d + f for f in os.listdir(d) if f.endswith('.txt')]
     train_text = ' '.join([read_text(d) for d in docs])
-
+    train_text = '---train---' + train_text + '---train---'
+    
     char_window = 5
     lower_case = True
     peak_type = 'entropy'

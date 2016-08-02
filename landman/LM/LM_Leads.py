@@ -70,6 +70,85 @@ def make_trie(text, window=7):
             current_dict = current_dict.setdefault(letter, {})
         current_dict[_end] = _end
     return root
+def find_ngrams(input_list, n):
+    return zip(*[input_list[i:] for i in range(n)])
+
+
+def gen_ngrams(text):
+    text = text.split()
+    n_grams = find_ngrams(text, 3)
+    return Counter(n_grams)
+
+def weight_node(trie):
+    weight = 0
+    for k, v in trie.iteritems():
+        if k == '_end_':
+            return 1
+        else:
+            weight += weight_node(trie[k])
+    return weight
+
+
+def entropy(trie):
+    n_weight = weight_node(trie)
+    return sum([weight_node(n) / n_weight * np.log(weight_node(n)) / n_weight for c, n in trie.iteritems()])
+
+
+def word_entropy(segment, trie):
+    if len(segment) == 0:
+        return entropy(trie)
+
+    letter = segment[0]
+    if letter in trie:
+        return word_entropy(segment[1:], trie[letter])
+    else:
+        return entropy(trie)
+
+
+def word_lsv(segment, trie):
+    if len(segment) == 0:
+        return len(trie)
+    letter = segment[0]
+    if letter in trie:
+        return word_lsv(segment[1:], trie[letter])
+    else:
+        return len(trie)
+
+
+def find_words(arg, vocab=None, maxword=None):  # , keywords=None):
+    doc_num, text = arg
+    if vocab is None:
+        words = []
+        d = 'traintext/'
+        docs = [d + f for f in os.listdir(d) if f.endswith('.txt')]
+        for doc in docs:
+            words.append(read_text(doc))
+        words = ' '.join(words)
+        vocab = list(set(words.split()))
+        trie = make_trie(words)
+
+    if maxword is None:
+        maxword = max(len(x) for x in vocab)
+
+    word_arr = []
+    while len(text) > 0:
+        start = 0
+        end = start + 1
+        options = []
+        for i in range(maxword):
+            test_word = text[start:end]
+            if test_word in vocab:
+                options.append(test_word)
+            end += 1
+
+        if options:
+            option = max(options, key=lambda x: len(x))
+            text = text[len(option):]
+            word_arr.append(option)
+        else:
+            text = text[1:]
+
+    return doc_num, ' '.join(word_arr)
 
 
 

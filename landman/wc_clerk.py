@@ -1,19 +1,15 @@
 from __future__ import division
-from LM.LM_Text import loop_text, clean_docs, multi_doc
-from LM.LM_OCR import loop_ocr
 from LM.LM_AWS import sync_read, write_to_s3, connect_s3, get_docs_from_s3, read_from_s3
-from LM.LM_Util import welcome, get_words
+from LM.LM_Util import welcome
 import pandas as pd
 import time
 from multiprocessing import Pool, cpu_count
 import re
-from collections import Counter, defaultdict
 from string import maketrans, punctuation
 import os
 import json
 import numpy as np
-import itertools
-from sklearn.cross_validation import train_test_split
+from lsseg import text_to_tries, Segmenter
 
 
 def get_text_df(fname):
@@ -25,6 +21,10 @@ def get_text_df(fname):
 
 
 def read_text(fname):
+    base = os.path.basename(fname)
+    doc = os.path.splitext(base)[0]
+    start ='---{0}---'.format(doc)
+    end='---{0}---'.format(doc)
     with open(fname) as f:
         text = f.read()
     text = text.lower()
@@ -34,101 +34,10 @@ def read_text(fname):
     text = text.translate(table)
     text = re.sub('[^a-z 0-9]+', ' ', text)
     text = ' '.join(text.split())
-    return text
+    ind = text.find('oil')
+    text = text[ind:]
 
-
-def find_ngrams(input_list, n):
-    return zip(*[input_list[i:] for i in range(n)])
-
-
-def gen_ngrams(text):
-    text = text.split()
-    n_grams = find_ngrams(text, 3)
-    return Counter(n_grams)
-
-
-def make_trie(text):
-    tries = text.split()
-    _end = '_end_'
-    root = dict()
-    for trie in tries:
-        current_dict = root
-        for letter in trie:
-            current_dict = current_dict.setdefault(letter, {})
-        current_dict[_end] = _end
-    return root
-
-
-def weight_node(trie):
-    weight = 0
-    for k, v in trie.iteritems():
-        if k == '_end_':
-            return 1
-        else:
-            weight += weight_node(trie[k])
-    return weight
-
-
-def entropy(trie):
-    n_weight = weight_node(trie)
-    return sum([weight_node(n) / n_weight * np.log(weight_node(n)) / n_weight for c, n in trie.iteritems()])
-
-
-def word_entropy(segment, trie):
-    if len(segment) == 0:
-        return entropy(trie)
-
-    letter = segment[0]
-    if letter in trie:
-        return word_entropy(segment[1:], trie[letter])
-    else:
-        return entropy(trie)
-
-
-def word_lsv(segment, trie):
-    if len(segment) == 0:
-        return len(trie)
-    letter = segment[0]
-    if letter in trie:
-        return word_lsv(segment[1:], trie[letter])
-    else:
-        return len(trie)
-
-
-def find_words(arg, vocab=None, maxword=None):  # , keywords=None):
-    doc_num, text = arg
-    if vocab is None:
-        words = []
-        d = 'traintext/'
-        docs = [d + f for f in os.listdir(d) if f.endswith('.txt')]
-        for doc in docs:
-            words.append(read_text(doc))
-        words = ' '.join(words)
-        vocab = list(set(words.split()))
-        trie = make_trie(words)
-
-    if maxword is None:
-        maxword = max(len(x) for x in vocab)
-
-    word_arr = []
-    while len(text) > 0:
-        start = 0
-        end = start + 1
-        options = []
-        for i in range(maxword):
-            test_word = text[start:end]
-            if test_word in vocab:
-                options.append(test_word)
-            end += 1
-
-        if options:
-            option = max(options, key=lambda x: len(x))
-            text = text[len(option):]
-            word_arr.append(option)
-        else:
-            text = text[1:]
-
-    return doc_num, ' '.join(word_arr)
+    return start+text+end
 
 
 def find_legal_description(arg):
@@ -220,8 +129,33 @@ def apply_funcs(df):
 
 if __name__ == '__main__':
     os.system('clear')
-    df = get_text_df('data/text_data.csv')
-    df = multi_func(df, find_words, ['doc', 'clean_text'])
-    df.to_pickle('data/corrected_text.pickle')
-    df = apply_funcs(df)
+    # df = get_text_df('data/text_data_sample.csv')
+    # df = multi_func(df, find_words, ['doc', 'clean_text'])
+    # df.to_pickle('data/corrected_text.pickle')
+    # df = apply_funcs(df)
     # # # # df.to_pickle('data/all_data.pickle')
+    # df = pd.read_pickle('data/all_data.pickle')
+
+    fname = 'textdocs/DOC100S825_0.txt'
+    text = read_text(fname)
+    # text = ''.join(text.split())
+
+    d = 'textdocs/'
+    docs = [d + f for f in os.listdir(d) if f.endswith('.txt')]
+    text = ' '.join([read_text(d) for d in docs])
+
+    d = 'traintext/'
+    docs = [d + f for f in os.listdir(d) if f.endswith('.txt')]
+    train_text = ' '.join([read_text(d) for d in docs])
+
+    char_window = 5
+    lower_case = True
+    peak_type = 'entropy'
+    threshold = 0.5
+
+    f_trie, b_trie = text_to_tries(text, lowercase=True)
+    seg = Segmenter(f_trie, b_trie, window=char_window, lowercase=lower_case, peak=peak_type)
+
+    mer = seg.segment(text, threshold=threshold)
+    for i in range(10):
+        print '\a'

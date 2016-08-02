@@ -116,14 +116,14 @@ def parse_legal_descr(arg):
     doc, text = arg
     # township
     towns = re.findall('town\w+ [\d ]+|town\w+ [\d]+', text)
-    for t in towns:
-        text = text.replace(t, '')
+    # for t in towns:
+    #     text = text.replace(t, '')
 
     # range
     range_text = ''.join(text.split())
-    ranges = re.findall('ran\w+ [\d ]+|ran\w+ [\d]+', range_text)
-    for r in ranges:
-        text = text.replace(r, '')
+    ranges = re.findall('ran\w+[\d]+w', range_text)
+    # for r in ranges:
+    #     text = text.replace(r, '')
 
     # section
     secs = re.findall('sec\w+ [\d ]+|sec\w+ [\d]+', text)
@@ -134,6 +134,7 @@ def parse_legal_descr(arg):
     ranges = [re.findall('\d+', ''.join(r.split())) for r in ranges]
     secs = [re.findall('\d+', ''.join(s.split())) for s in secs]
 
+    print doc, 'done!'
     return doc, towns, ranges, secs
 
 
@@ -142,15 +143,19 @@ def apply_funcs(df):
     print 'find legal description'
     new_df = multi_func(df[['doc', 'clean_text']], find_legal_description, ['doc', 'legal_text'])
     df = pd.merge(df, new_df, how='left', on='doc')
+    del new_df
+    print 'done!'
 
     print 'lease years'
     new_df = multi_func(df[['doc', 'clean_text']], find_years, ['doc', 'years'])
     df = pd.merge(df, new_df, how='left', on='doc')
+    del new_df
+    print 'done!'
 
     print 'parse legal description'
     new_df = multi_func(df[['doc', 'legal_text']], parse_legal_descr, ['doc', 'town', 'range', 'section'])
     df = pd.merge(df, new_df, how='left', on='doc')
-
+    del new_df
     return df
 
 
@@ -181,13 +186,13 @@ def segment_text(doc_str):
     print 'done!'
 if __name__ == '__main__':
     os.system('clear')
-    df = get_text_df('data/text_data.csv')
+    df = get_text_df('data/text_data_sample.csv')
     df = multi_func(df, find_words, ['doc', 'clean_text'])
-    df.to_pickle('data/corrected_text.pickle')
-
-    df = pd.read_pickle('data/corrected_text.pickle')
+    # df.to_pickle('data/corrected_text.pickle')
+    #
+    # df = pd.read_pickle('data/corrected_text.pickle')
     df = apply_funcs(df)
-    df.to_pickle('data/all_data.pickle')
+    # df.to_pickle('data/all_data.pickle')
 
     # fname = 'textdocs/DOC100S825_0.txt'
     # text = read_text(fname)

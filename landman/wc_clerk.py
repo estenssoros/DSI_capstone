@@ -1,6 +1,6 @@
 from __future__ import division
 from LM.LM_AWS import sync_read, write_to_s3, connect_s3, get_docs_from_s3, read_from_s3
-from LM.LM_Util import welcome
+from LM.LM_Util import welcome, twilio_message
 import pandas as pd
 import time
 from multiprocessing import Pool, cpu_count
@@ -72,7 +72,7 @@ def find_words(arg, vocab=None, maxword=None):  # , keywords=None):
         else:
             text = text[1:]
 
-    return doc, ' '.join(word_arr)
+    return doc_num, ' '.join(word_arr)
 
 
 def find_legal_description(arg):
@@ -115,13 +115,13 @@ def multi_func(df, func, columns):
 def parse_legal_descr(arg):
     doc, text = arg
     # township
-    towns = re.findall('town\w+ [\d ]+|town\w+ [\d]+', text)
+    towns = re.findall('town[a-z ]+ [\d ]+|town[a-z]+ [\d]+|[\d]+ north', text)
     # for t in towns:
     #     text = text.replace(t, '')
 
     # range
     range_text = ''.join(text.split())
-    ranges = re.findall('ran\w+[\d]+w', range_text)
+    ranges = re.findall('ran[a-z ]+\d+|[\d]+west', range_text)
     # for r in ranges:
     #     text = text.replace(r, '')
 
@@ -134,7 +134,6 @@ def parse_legal_descr(arg):
     ranges = [re.findall('\d+', ''.join(r.split())) for r in ranges]
     secs = [re.findall('\d+', ''.join(s.split())) for s in secs]
 
-    print doc, 'done!'
     return doc, towns, ranges, secs
 
 
@@ -186,12 +185,13 @@ def segment_text(doc_str):
     print 'done!'
 if __name__ == '__main__':
     os.system('clear')
-    df = get_text_df('data/text_data_sample.csv')
-    df = multi_func(df, find_words, ['doc', 'clean_text'])
+    # df = get_text_df('data/text_data.csv')
+    # df = multi_func(df, find_words, ['doc', 'clean_text'])
     # df.to_pickle('data/corrected_text.pickle')
     #
     # df = pd.read_pickle('data/corrected_text.pickle')
-    df = apply_funcs(df)
+    # df = apply_funcs(df)
+    # twilio_message('done!')
     # df.to_pickle('data/all_data.pickle')
 
     # fname = 'textdocs/DOC100S825_0.txt'

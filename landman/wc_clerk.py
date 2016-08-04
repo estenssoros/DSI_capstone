@@ -168,20 +168,25 @@ def segment_text(doc_str):
     train_text = ' '.join([read_text(d) for d in docs])
     train_text = '---train---' + train_text + '---train---'
 
+    # text = train_text+text
     char_window = 4
     lower_case = True
     peak_type = 'freedom'
-    threshold = 0.8
+    threshold = 0.5
 
     f_trie, b_trie = text_to_tries(train_text, lowercase=True)
     seg = Segmenter(f_trie, b_trie, window=char_window, lowercase=lower_case, peak=peak_type)
 
     mer = ' '.join(seg.segment(text, threshold=threshold))
     mer = ' '.join(mer.split())
+    # return mer
     indx = [m.start() for m in re.finditer(doc_str, mer)]
-    with open('results_{0}_{1}_{2}.txt'.format(char_window, peak_type[0].upper(), threshold), 'w') as f:
-        f.write(mer[indx[0] + len(doc_str):indx[1]])
-
+    try:
+        with open('results_{0}_{1}_{2}.txt'.format(char_window, peak_type[0].upper(), threshold), 'w') as f:
+            f.write(mer[indx[0] + len(doc_str):indx[1]])
+    except:
+        pass
+    return mer
     print 'done!'
 if __name__ == '__main__':
     os.system('clear')
@@ -198,3 +203,4 @@ if __name__ == '__main__':
     # text = read_text(fname)
     # text = ''.join(text.split())
     # word_arr = find_words(text)
+    mer = segment_text('DOC100S1082')

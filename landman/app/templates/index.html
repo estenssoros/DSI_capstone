@@ -1,0 +1,33 @@
+<html>
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='mystyles.css') }}">
+
+<body background="/static/morning_gun.png">
+    <form action="/print_text" , method='POxzST'>
+        Township:
+        <select name="township" , method='POST'>
+            {% for i in range(1,13) %} {% if i
+            < 10%} <option value=0{{i}}N>0{{i}}N</option>
+                {% else %}
+                <option value={{i}}N>{{i}}N</option>
+                {% endif %} {% endfor %}
+        </select>
+        <br> Range:
+        <select name="range" , method='POST'>
+            {% for i in range(56,69) %}
+            <option value={{i}}W>{{i}}W</option>
+            {% endfor %}
+        </select>
+        <br> Section:
+        <select name="section" , method='POST'>
+            {% for i in range(1,36) %} {% if i
+            < 10 %} <option value=0{{i}}>0{{i}}</option>
+                {% else %}
+                <option value={{i}}>{{i}}</option>
+                {% endif %} {% endfor %}
+        </select>
+        <br>
+        <input type="submit" />
+    </form>
+</body>
+
+</html>

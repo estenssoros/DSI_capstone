@@ -1,0 +1,11 @@
+body {
+    background="/static/morning_gun.png";
+}
+form {
+    border: 1px solid black;
+    width: 150px;
+    justify-content: center;
+}
+select {
+
+}

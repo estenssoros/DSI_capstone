@@ -4,8 +4,11 @@ body {
 form {
     border: 1px solid black;
     width: 150px;
-    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
 }
 select {
-
+    padding: 0 0 0 20px;
+    margin-left: auto;
+    margin-right: auto;
 }

@@ -1,0 +1,35 @@
+<html>
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='results_style.css')}}">
+
+<body>
+    <h1>
+        Showing results for: {{trs}}
+    </h1>
+    <h2>
+        Found {{count}} documents(s) matching your search!
+    </h2>
+    <h3>
+        <form action="/download_docs", method="POST">
+            <table>
+                <th>Select</th>
+                <th>Document Number</th>
+                <th>Recording Date</th>
+                <th>Lease Terms</th>
+                <th>Expiration</th>
+
+                {% for r in data%}
+                    <tr>
+                        <td><input type="checkbox", name ={{r[0]}}, method="POST"></td>
+                        <td>{{r[0]}}</td>
+                        <td>{{r[1]}}</td>
+                        <td>{{r[2]}}</td>
+                        <td>{{r[3]}}</td>
+                    </tr>
+                {% endfor %}
+
+            </table>
+            <input type="submit"/>
+        <form>
+    </h3>
+</body>
+</html>

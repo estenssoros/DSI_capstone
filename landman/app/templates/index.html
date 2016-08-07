@@ -1,32 +1,49 @@
 <html>
-<link rel=stylesheet type=text/css href="{{ url_for('static', filename='mystyles.css') }}">
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='index_style.css')}}">
 
-<body background="/static/morning_gun.png">
-    <form action="/print_text" , method='POST'>
-        Township:
-        <select name="township" , method='POST'>
-            {% for i in range(1,13) %} {% if i
-            < 10%} <option value=0{{i}}N>0{{i}}N</option>
-                {% else %}
-                <option value={{i}}N>{{i}}N</option>
-                {% endif %} {% endfor %}
-        </select>
-        <br> Range:
-        <select name="range" , method='POST'>
-            {% for i in range(56,69) %}
-            <option value={{i}}W>{{i}}W</option>
-            {% endfor %}
-        </select>
-        <br> Section:
-        <select name="section" , method='POST'>
-            {% for i in range(1,36) %} {% if i
-            < 10 %} <option value=0{{i}}>0{{i}}</option>
-                {% else %}
-                <option value={{i}}>{{i}}</option>
-                {% endif %} {% endfor %}
-        </select>
-        <br>
-        <input type="submit" />
+<body>
+    <form action="/results" , method='POST'>
+        <fieldset>
+            <legend>Legal Description</legend>
+            <p>
+                <label>Township:</label>
+                <select name="township" , method='POST'>
+                    {% for i in range(1,13) %} {% if i
+                    < 10%} <option value=0{{i}}N>0{{i}}N</option>
+                        {% else %}
+                        <option value={{i}}N>{{i}}N</option>
+                        {% endif %} {% endfor %}
+                </select>
+            </p>
+            <p>
+                <label>Range:</lable>
+                    <select name="range" , method='POST'>
+                        {% for i in range(56,69) %}
+                        <option value={{i}}W>{{i}}W</option>
+                        {% endfor %}
+                    </select>
+            </p>
+            <p>
+                <label>Section:</label>
+                <select name="section" , method='POST'>
+                    {% for i in range(1,36) %} {% if i
+                    < 10 %} <option value=0{{i}}>0{{i}}</option>
+                        {% else %}
+                        <option value={{i}}>{{i}}</option>
+                        {% endif %} {% endfor %}
+                </select>
+            </p>
+            <input type="submit" />
+        </fieldset>
+    </form>
+    <form>
+        <fieldset>
+            <legend>Search By Text</legend>
+            <p>
+                <textarea type="text" name="user_input" rows=5 cols=40></textarea>
+            </p>
+                <input type="submit"/>
+        </fieldset>
     </form>
 </body>
 

@@ -1,0 +1,19 @@
+body {
+    background-image: url("/static/morning_gun.png");
+}
+
+form {
+    border: 1px solid black;
+    width: 25%;
+    margin-left: 5%;
+    margin-top: 3%;
+    text-align: center;
+}
+
+legend {
+    font-size: 150%;
+}
+
+label {
+    font-size: 110%;
+}

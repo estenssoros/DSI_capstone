@@ -71,4 +71,3 @@ Here is the final plot of lease frequency in Weld County. Through text extractio
 ___
 
 Please feel free to contact me with any questions on the project.
-seb.estenssoro@gmail.com

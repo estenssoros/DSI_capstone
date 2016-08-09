@@ -1,49 +1,38 @@
-# TO DO
 
-### NLP
-```
-[x] determine which pdfs needs to be ocrd
+# Virtual Landman
+# ![pageres](app/static/morning_gun.png)
 
-[x] create pipeline for converting pdf to text
+Scrape Oil and Gas leases from  [Weld County Website](https://searchicris.co.weld.co.us/recorder/web/login.jsp?submit=I+Acknowledge) using Mechanize, Pytesseract, and Pypdfocr. Using lease information determine areas of land that have expired and are not held by production.
+___
+- [Scraping](#scraping)
+    - [Getting Document Numbers](#getting-document-numbers)
+    - [Storing in Mongo](#storing-in-mongo)
+- [File Acquisition](#file-acquisition)
+    - [EC2 & S3](#ec2-s3)
+- [Initial Text Extraction](#initial-text-extraction)
+     - [Evaluating Health of Text Documents](#evaluating-health-of-text-documents)
+- [OCR workflow](#ocr-workflow)
+- [Multiprocessing for Text evaluation](#multiprocessing-for-text-evaluation)
+- [Unsupervised Text Segmentation](#unsupervised-text-segmentation)
+- [Word Scanning Algorithm](#word-scanning-algorithm)
+- [Profit](#profit)
 
-[x] finish converting pdfs to ocr pdfs
+## Scraping
+### Getting document numbers
+### Storing in Mongo
 
-[x] convert pdfs to text
+## File Acquisition
+### EC2 S3
 
-[x] QC text documents
-    [x]repeat ocr/pdf-to-text steps
+## Initial Text Extraction
+### Evaluating Health of Text documents
 
-[x] clean text
-    [x] remove punctuation
-    [x] lowercase
+## OCR Workflow
 
-[ ] build sliding algorithm to parse words
-    [x] finish lease vocabulary
-    [x] find method to accurately interpret and pull out words
-    [x] create ngrams
-    [x] how to find probability of ngram occurring
-    [ ] do the damn thing
+## Multiprocessing for Text evaluation
 
-[x] text effectiveness of spell checker on manual documents
+## Unsupervised Text Segmentation
 
-[ ] extract mapping information
-    [ ] township
-    [ ] range
-    [ ] section
-    [ ] quarter
-```
+## Word Scanning algorithm
 
-### MAPPING
-```
-[x] figure out how to shape-file
-[ ] plot lease documents on map
-    [x] town-range detail
-    [ ] section detail
-    [ ] quarter detail
-
-```
-### ADDITIONAL DATA
-```
-[ ] COGIS production data
-[ ] Mike?
-```
+## Profit

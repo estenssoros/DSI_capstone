@@ -203,4 +203,4 @@ if __name__ == '__main__':
     # text = read_text(fname)
     # text = ''.join(text.split())
     # word_arr = find_words(text)
-    mer = segment_text('DOC100S1082')
+    # mer = segment_text('DOC100S1082')

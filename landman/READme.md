@@ -45,6 +45,7 @@ ___
 ## File Acquisition
 The results stored in Mongo were compiled into a pandas data frame that was stored on S3. Mechanize was used to navigate forms to the document download page. A single T2.Micro instance was used to download all documents by downloading 50 documents at a time, uploading to S3, and purging memory-- repeat.
 ___
+### EC2 & S3
 ### ![EC2 S3](media/aws.png)
 Throughout this project, I took advantage of the high bandwith between EC2 instances and S3 to monitor my workflow and keep track of documents that had been processed. A single instance would sync with a pandas data frame using the AWS tools in [LM_AWS](LM/LM_AWS.py) and update the documents processed.
 ___

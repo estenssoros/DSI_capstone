@@ -137,22 +137,17 @@ def recursive_br(br, k=0):
 
     Recursive function to find all pages associate with a websearch
     '''
-
     html = br.response().read()
     results = parse_html(html, k)
     k += len(results)
 
-    found_next = False
     for link in br.links():
         if link.text == 'Next':
-            found_next = True
+            print 'switching to:', link.url
+            br.follow_link(link)
+            results.update(recursive_br(br, k))
+            br.back()
             break
-
-    if found_next == True:
-        print 'switching to:', link.url
-        br.follow_link(link)
-        results.update(recursive_br(br, k))
-        br.back()
     return results
 
 

@@ -1,3 +1,4 @@
-# DSI_capstone
+# ![Denver](media/01.jpg)
+Capstone project for Galvanize Data Immersive Program Summer 2016
 
-I can haz data science?
+# [Virtual Landman](landman)

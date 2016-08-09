@@ -8,7 +8,7 @@ ___
     - [Getting Document Numbers](#getting-document-numbers)
     - [Storing in Mongo](#storing-in-mongo)
 - [File Acquisition](#file-acquisition)
-    - [EC2 & S3](#ec2-s3)
+    - [EC2 & S3](#ec2-&-s3)
 - [OCR workflow](#ocr-workflow)
 - [Text Extraction and Evaluation](#text-extraction-and-evalution)
 - [Unsupervised Text Segmentation](#unsupervised-text-segmentation)

@@ -14,6 +14,7 @@ ___
 - [Unsupervised Text Segmentation](#unsupervised-text-segmentation)
 - [Word Scanning Algorithm](#word-scanning-algorithm)
 - [Profit](#profit)
+
 ___
 
 ## Scraping

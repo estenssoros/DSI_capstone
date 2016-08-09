@@ -15,6 +15,7 @@ ___
 - [Word Scanning Algorithm](#word-scanning-algorithm)
 - [Profit](#profit)
 ___
+
 ## Scraping
 scraping was peformed on a T2.micro EC2 instance with the following libraries
 ```
